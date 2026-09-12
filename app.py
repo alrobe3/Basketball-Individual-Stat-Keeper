@@ -1061,7 +1061,28 @@ async def share_image(request: Request):
     token = uuid.uuid4().hex
     image_path = Path.home() / f'.basketball-share-{token}-{filename}'
     image_path.write_bytes(image_bytes)
-    SHARE_FILES[token] = image_path
+    SHARE_FILES[token] = (image_path, 'image/png')
+    return {'url': f'/api/share-image/open?token={token}'}
+
+
+@app.post('/api/share-file')
+async def share_file(request: Request):
+    payload = await request.json()
+    encoded_data = payload.get('data', '')
+    filename = Path(payload.get('filename', 'shared-file')).name
+    content_type = payload.get('content_type', 'application/octet-stream')
+    if ',' not in encoded_data:
+        raise HTTPException(400, 'Invalid file data')
+
+    try:
+        file_bytes = base64.b64decode(encoded_data.split(',', 1)[1])
+    except (ValueError, TypeError):
+        raise HTTPException(400, 'Invalid file data')
+
+    token = uuid.uuid4().hex
+    file_path = Path.home() / f'.basketball-share-{token}-{filename}'
+    file_path.write_bytes(file_bytes)
+    SHARE_FILES[token] = (file_path, content_type)
     return {'url': f'/api/share-image/open?token={token}'}
 
 
@@ -1175,9 +1196,10 @@ def main():
 
             try:
                 token = urllib.parse.parse_qs(parsed_url.query).get('token', [None])[0]
-                image_path = SHARE_FILES.pop(token, None)
-                if image_path is None:
+                share_file = SHARE_FILES.pop(token, None)
+                if share_file is None:
                     raise RuntimeError('The share image expired; try again')
+                image_path, content_type = share_file
 
                 from android.content import Intent
                 from androidx.core.content import FileProvider
@@ -1195,7 +1217,7 @@ def main():
                 )
 
                 intent = Intent(Intent.ACTION_SEND)
-                intent.setType('image/png')
+                intent.setType(content_type)
                 intent.putExtra(Intent.EXTRA_STREAM, image_uri)
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 chooser = Intent.createChooser(intent, 'Share Shot Chart')

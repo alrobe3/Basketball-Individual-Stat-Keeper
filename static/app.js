@@ -708,12 +708,16 @@ function renderReports() {
             <td>${escapeHtml(g.season_name)}</td>
             <td>${escapeHtml(g.status)}</td>
             <td>${g.team_score ?? 0} - ${g.opponent_score ?? 0}</td>
-            <td><a class="btn primary" href="/api/games/${g.id}/report.pdf">Download PDF</a></td>
+            <td><button class="btn primary" onclick="shareGameReport(${g.id})">Share PDF</button></td>
         </tr>
     `).join('');
 }
 
-function downloadSeasonReport() {
+async function shareGameReport(gameId) {
+    await shareReportFile(`/api/games/${gameId}/report.pdf`, `game-${gameId}-report.pdf`);
+}
+
+async function shareSeasonReport() {
     const seasonId = $('reportSeason').value;
 
     if (!seasonId) {
@@ -721,7 +725,38 @@ function downloadSeasonReport() {
         return;
     }
 
-    window.location.href = `/api/seasons/${seasonId}/report.pdf`;
+    await shareReportFile(
+        `/api/seasons/${seasonId}/report.pdf`,
+        `season-${seasonId}-summary.pdf`
+    );
+}
+
+async function shareReportFile(url, filename) {
+    try {
+        toast('Preparing PDF share...');
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Could not create the PDF report');
+
+        const blob = await response.blob();
+        const pdfData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Could not read the PDF report'));
+            reader.readAsDataURL(blob);
+        });
+
+        const shareResponse = await fetch('/api/share-file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename, content_type: 'application/pdf', data: pdfData })
+        });
+        if (!shareResponse.ok) throw new Error('Could not prepare the PDF for sharing');
+
+        const result = await shareResponse.json();
+        window.location.href = new URL(result.url, window.location.href).href;
+    } catch (error) {
+        if (error.name !== 'AbortError') toast(error.message || 'Could not share PDF');
+    }
 }
 
 /* ---------------- Game Management ---------------- */
@@ -782,7 +817,7 @@ function renderGameManagement() {
                     <button class="btn primary" onclick="openManagedGame(${game.id})">Open Game</button>
                     <button class="btn secondary" onclick="openEditGame(${game.id})">Edit</button>
                     <button class="btn secondary" onclick="duplicateGame(${game.id})">Duplicate</button>
-                    <a class="btn secondary" href="/api/games/${game.id}/report.pdf">Export PDF</a>
+                    <button class="btn secondary" onclick="shareGameReport(${game.id})">Share PDF</button>
                     <button class="btn danger" onclick="deleteManagedGame(${game.id})">Delete</button>
                 </div>
             </div>
