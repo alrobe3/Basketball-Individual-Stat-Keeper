@@ -14,6 +14,7 @@ import threading
 import time
 import urllib.parse
 import uuid
+import webbrowser
 from datetime import date
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as pdfcanvas
@@ -1144,6 +1145,15 @@ def main():
                     id='settings'
                 )
             )
+            self.commands.add(
+                Command(
+                    self.open_project_link,
+                    'Project on GitHub',
+                    group=data_group,
+                    order=20,
+                    id='project-github'
+                )
+            )
 
             self.main_window.show()
 
@@ -1199,6 +1209,9 @@ def main():
             self.main_window.content.evaluate_javascript(
                 "document.getElementById('settingsModal').classList.add('open')"
             )
+
+        def open_project_link(self, widget):
+            webbrowser.open('https://github.com/alrobe3/Basketball-Individual-Stat-Keeper')
 
         def on_exit(self):
             if getattr(self, 'server', None):
