@@ -1119,10 +1119,16 @@ def main():
 
             self.main_window = toga.MainWindow(self.formal_name)
             from android.graphics import Color
+            from android.graphics.drawable import ColorDrawable
 
             self._impl.native.getWindow().setNavigationBarColor(
                 Color.parseColor('#161616')
             )
+            action_bar = self._impl.native.getActionBar()
+            if action_bar:
+                action_bar.setBackgroundDrawable(
+                    ColorDrawable(Color.parseColor('#161616'))
+                )
             self.main_window.content = toga.WebView(
                 url=f'http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}'
             )

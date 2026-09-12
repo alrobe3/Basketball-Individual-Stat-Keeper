@@ -5,7 +5,6 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);c
 button,input,select{font:inherit}
 .app{max-width:1100px;margin:auto;padding:14px 14px 90px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.brand-header{background:#161616;color:#fff;padding:10px 14px;border-radius:16px}
 .brand{font-weight:900;font-size:22px}
 .topbar-actions{display:flex;align-items:center;gap:8px}
 .status{font-size:12px;padding:6px 10px;border-radius:99px;background:#fff}
