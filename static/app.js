@@ -12,6 +12,7 @@ const S = {
     addingPlayerToNewGame: false,
     opponentSelectAfterSave: null,
     shotPressTimer: null,
+    lastTap: null,
     poll: null,
     gameManagementFilter: 'active'
 };
@@ -1157,6 +1158,9 @@ function setupCourt() {
         const r = c.getBoundingClientRect();
         const canvasPoint = canvasPointFromEvent(c, e);
         const point = normalizeCanvasPoint(c, canvasPoint);
+        const now = Date.now();
+        const previousTap = S.lastTap;
+        S.lastTap = { time: now, point };
 
         const selectedShot = S.game.shots
             .filter(s => s.player_id === currentPlayer().id)
@@ -1169,32 +1173,41 @@ function setupCourt() {
             }))
             .sort((a, b) => a.distance - b.distance)[0];
 
-        if (selectedShot && selectedShot.distance <= 20) {
-            clearTimeout(S.shotPressTimer);
-            S.shotPressTimer = setTimeout(() => {
-                S.pending = null;
-                S.override = null;
-                S.selectedShotId = selectedShot.shot.id;
-                drawCourt();
-                $('deleteShotResult').textContent = selectedShot.shot.made
-                    ? 'Made shot'
-                    : 'Missed shot';
-                $('shotDeleteModal').classList.add('open');
-                positionShotModal('shotDeleteModal', point, r);
-            }, 550);
-            return;
-        }
-
         clearTimeout(S.shotPressTimer);
-        S.shotPressTimer = setTimeout(() => {
+
+        if (
+            previousTap &&
+            now - previousTap.time <= 350 &&
+            Math.hypot(
+                (previousTap.point.x - point.x) * c.width,
+                (previousTap.point.y - point.y) * c.height
+            ) <= 35
+        ) {
+            S.lastTap = null;
             S.pending = point;
             S.override = null;
-
             $('shotType').textContent = `Pending: ${autoThree(S.pending) ? '3PT' : '2PT'}`;
             drawCourt();
             $('shotResultType').textContent = autoThree(S.pending) ? '3PT' : '2PT';
             $('shotResultModal').classList.add('open');
             positionShotModal('shotResultModal', point, r);
+            return;
+        }
+
+        S.shotPressTimer = setTimeout(() => {
+            S.pending = selectedShot && selectedShot.distance <= 20 ? null : point;
+            S.override = null;
+            S.selectedShotId = selectedShot && selectedShot.distance <= 20
+                ? selectedShot.shot.id
+                : null;
+            drawCourt();
+            if (S.selectedShotId) {
+                $('deleteShotResult').textContent = selectedShot.shot.made
+                    ? 'Made shot'
+                    : 'Missed shot';
+            }
+            $('statMenuModal').classList.add('open');
+            positionShotModal('statMenuModal', point, r);
         }, 550);
     });
 
@@ -1283,6 +1296,7 @@ async function saveShot(made) {
     S.override = null;
     S.selectedShotId = null;
     closeModal('shotResultModal');
+    closeModal('statMenuModal');
     $('shotType').textContent = 'Pending: Auto';
 
     await refreshGame();
@@ -1298,6 +1312,15 @@ function cancelShot() {
 }
 
 async function deleteShot() {
+    closeModal('statMenuModal');
+    if (S.selectedShotId) {
+        const shotId = S.selectedShotId;
+        S.selectedShotId = null;
+        await api(`/api/shots/${shotId}`, { method: 'DELETE' });
+        await refreshGame();
+        return;
+    }
+
     const shots = S.game.shots.filter(s => s.player_id === currentPlayer().id);
     if (!shots.length) return;
 
@@ -1325,11 +1348,13 @@ function cancelSelectedShot() {
 async function clearChart() {
     if (!confirm('Clear all shots for this player in this game?')) return;
 
+    closeModal('statMenuModal');
     await api(`/api/games/${S.game.id}/shots?player_id=${currentPlayer().id}`, { method: 'DELETE' });
     await refreshGame();
 }
 
 async function eventStat(t) {
+    closeModal('statMenuModal');
     await api('/api/events', {
         method: 'POST',
         body: JSON.stringify({
@@ -1343,6 +1368,7 @@ async function eventStat(t) {
 }
 
 async function removeLatestStat() {
+    closeModal('statMenuModal');
     await api(`/api/events/latest?game_id=${S.game.id}&player_id=${currentPlayer().id}`, { method: 'DELETE' });
     await refreshGame();
 }

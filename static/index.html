@@ -69,6 +69,31 @@
     <div class="card toolbar">
         <div>
             <label>Game</label>
+
+    <!-- STAT ACTION MENU -->
+    <div id="statMenuModal" class="modal">
+        <div class="modal-card stat-menu-card">
+            <h2>Record Stat</h2>
+            <div class="stat-menu-grid">
+                <button class="primary" onclick="saveShot(true)">Made Shot</button>
+                <button onclick="saveShot(false)">Missed Shot</button>
+                <button onclick="deleteShot()">Delete Shot</button>
+                <button onclick="eventStat('ft_made')">Made FT</button>
+                <button onclick="eventStat('ft_missed')">Missed FT</button>
+                <button onclick="clearChart()">Clear Chart</button>
+                <button onclick="eventStat('assist')">+ Assist</button>
+                <button onclick="eventStat('steal')">+ Steal</button>
+                <button onclick="eventStat('oreb')">+ Off Rebound</button>
+                <button onclick="eventStat('dreb')">+ Def Rebound</button>
+                <button onclick="eventStat('turnover')">+ Turnover</button>
+                <button onclick="eventStat('block')">+ Block</button>
+            </div>
+            <div class="actions">
+                <button class="btn secondary" onclick="removeLatestStat()">Remove Latest Non-shot Stat</button>
+                <button class="btn secondary" onclick="closeModal('statMenuModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
             <select id="gameSelect"></select>
         </div>
         <div>
@@ -105,31 +130,11 @@
             <div class="court-wrap">
                 <canvas id="court" class="court" width="720" height="650"></canvas>
             </div>
-            <div class="small">Long-press the court to record a shot, or tap an existing shot to delete it. The app estimates 2PT/3PT; use the toggle to override.</div>
+            <div class="small">Double-tap the court to record a shot. Long-press to open the stat menu. Long-press an existing shot to select it for deletion.</div>
             <div class="actions">
                 <button id="shotType" class="btn secondary" onclick="toggleShotType()">Pending: Auto</button>
                 <button class="btn secondary" onclick="shareShotChart()">Share Shot Chart</button>
                 
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="control-grid">
-                <button class="primary" onclick="saveShot(true)">Made Shot</button>
-                <button onclick="saveShot(false)">Missed Shot</button>
-                <button onclick="deleteShot()">Delete Shot</button>
-                <button onclick="eventStat('ft_made')">Made FT</button>
-                <button onclick="eventStat('ft_missed')">Missed FT</button>
-                <button onclick="clearChart()">Clear Chart</button>
-                <button onclick="eventStat('assist')">+ Assist</button>
-                <button onclick="eventStat('steal')">+ Steal</button>
-                <button onclick="eventStat('oreb')">+ Off Rebound</button>
-                <button onclick="eventStat('dreb')">+ Def Rebound</button>
-                <button onclick="eventStat('turnover')">+ Turnover</button>
-                <button onclick="eventStat('block')">+ Block</button>
-            </div>
-            <div class="actions">
-                <button class="btn secondary" onclick="removeLatestStat()">Remove Latest Non-shot Stat</button>
             </div>
         </div>
 
