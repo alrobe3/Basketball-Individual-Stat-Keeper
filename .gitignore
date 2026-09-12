@@ -1,0 +1,23 @@
+# Local databases and runtime files
+basketball.db
+*.db
+logs/
+
+# Python environments and caches
+.venv/
+beeware-venv/
+__pycache__/
+*.py[cod]
+
+# Build output
+build/
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Generated package metadata
+*.egg-info/
+*.dist-info/

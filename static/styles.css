@@ -1,0 +1,95 @@
+:root{--orange:#ff9f0a;--bg:#d8d5c3;--card:#fff;--ink:#141414;--muted:#666;--green:#1b9e3e;--red:#e23b3b}
+*{box-sizing:border-box}
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select{font:inherit}
+.app{max-width:1100px;margin:auto;padding:14px 14px 90px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.brand{font-weight:900;font-size:22px}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.status{font-size:12px;padding:6px 10px;border-radius:99px;background:#fff}
+.card{background:var(--card);border-radius:24px;padding:18px;box-shadow:0 5px 10px #0005;margin-bottom:16px}
+.screen{display:none}
+.screen.active{display:block}
+.grid{display:grid;gap:14px}
+.grid.two{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{font-size:12px;font-weight:700;color:#333}
+input,select{width:100%;padding:11px;border:1px solid #ccc;border-radius:12px;background:white}
+.btn{border:0;border-radius:20px;padding:12px 18px;cursor:pointer;text-decoration:none;display:inline-block;color:inherit}
+.btn.primary{background:var(--orange);color:#111}
+.btn.danger{background:#ffe2e2;color:#9a1111}
+.btn.secondary{background:#eee}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.stats-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.stat label{display:block;font-size:12px}
+.pill{margin-top:6px;background:var(--orange);padding:8px 5px;border-radius:20px;font-weight:700;white-space:nowrap}
+.court-wrap{position:relative;max-width:720px;margin:auto}
+.court{display:block;width:100%;aspect-ratio:1.1;background:#c7aa6b;border:2px solid #222;border-radius:12px;touch-action:none}
+.control-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.control-grid button{border:0;border-radius:28px;padding:14px 6px;cursor:pointer}
+table{width:100%;border-collapse:collapse;display:block;overflow-x:auto}
+th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
+.toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.toolbar>div{min-width:160px;flex:1}
+.modal{position:fixed;inset:0;background:#0009;display:none;place-items:center;z-index:50;padding:12px}
+.modal.open{display:grid}
+#playerModal.open{z-index:60}
+#opponentModal.open{z-index:60}
+.modal-card{background:white;width:min(620px,100%);max-height:90vh;overflow:auto;border-radius:22px;padding:20px}
+.shot-delete-card{overflow:visible}
+.shot-delete-card::before{content:"";position:absolute;left:var(--arrow-left);width:16px;height:16px;background:white;transform:translateX(-50%) rotate(45deg);z-index:0}
+.shot-delete-card.arrow-top::before{top:-8px;border-left:1px solid #ddd;border-top:1px solid #ddd}
+.shot-delete-card.arrow-bottom::before{bottom:-8px;border-right:1px solid #ddd;border-bottom:1px solid #ddd}
+.settings-card{width:min(420px,100%)}
+.shot-result-card{width:min(360px,100%);text-align:center}
+.shot-type-toggle{margin-top:4px}
+.shot-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.shot-result-actions .btn{padding:16px 12px;font-weight:700}
+.canvas-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mini-canvas{width:100%;aspect-ratio:1.1;background:#c7aa6b;border:1px solid #222;border-radius:12px}
+.toast{position:fixed;top:12px;right:12px;background:#111;color:white;padding:10px 16px;border-radius:12px;display:none;z-index:80}
+.empty{text-align:center;color:var(--muted);padding:24px}
+.score{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}
+.score input{width:75px;text-align:center}
+.small{font-size:12px;color:var(--muted)}
+
+.game-filter-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.game-management-card{position:relative}
+.game-management-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.game-management-title{margin:0;font-size:20px}
+.game-management-meta{color:var(--muted);font-size:13px;margin-top:5px}
+.game-management-score{background:var(--orange);border-radius:20px;min-width:100px;padding:10px 14px;text-align:center;font-size:20px;font-weight:800}
+.game-management-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.game-status{display:inline-block;border-radius:20px;padding:5px 10px;font-size:12px;font-weight:700;text-transform:capitalize}
+.game-status-live,.game-status-scheduled{background:#dcfce7;color:#166534}
+.game-status-final{background:#e5e7eb;color:#374151}
+.game-status-cancelled{background:#fee2e2;color:#991b1b}
+.game-player-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;margin-top:8px}
+.game-player-option{background:#f3f3f3;border-radius:12px;padding:10px;display:block}
+.game-player-option input{width:auto;margin-right:6px}
+
+.ref-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.ref-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f6f6f6;border-radius:16px;padding:12px 16px;flex-wrap:wrap}
+.ref-row-name{font-weight:700}
+.ref-row-count{color:var(--muted);font-size:12px}
+.ref-row-actions{display:flex;gap:8px}
+
+@media(max-width:650px){
+    .topbar{align-items:flex-start;flex-wrap:wrap}
+    .topbar-actions{flex:1 1 auto;justify-content:flex-end;flex-wrap:wrap}
+    .stats-grid{grid-template-columns:repeat(4,1fr)}
+    .canvas-row{grid-template-columns:1fr}
+    .control-grid button{font-size:12px}
+    .nav{gap:4px;padding:6px}
+    .nav button{font-size:10px;padding:9px 3px}
+    .card{padding:14px}
+    .app{padding:8px 8px 88px}
+    .brand{font-size:18px}
+    .score{flex-wrap:wrap;gap:8px;font-size:18px}
+    .score input{width:56px;flex:0 0 56px}
+    .score button{flex:1 1 120px;min-width:0}
+    .game-management-heading{display:block}
+    .game-management-score{display:inline-block;margin-top:10px}
+    .game-management-actions .btn{flex:1 1 calc(50% - 8px)}
+}

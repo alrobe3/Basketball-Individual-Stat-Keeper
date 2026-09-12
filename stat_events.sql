@@ -1,0 +1,11 @@
+INSERT INTO "stat_events" VALUES(1,1,1,'oreb',1,'2026-09-04 19:56:35');
+INSERT INTO "stat_events" VALUES(2,1,1,'block',1,'2026-09-04 19:56:36');
+INSERT INTO "stat_events" VALUES(3,1,1,'turnover',1,'2026-09-04 19:56:53');
+INSERT INTO "stat_events" VALUES(4,1,1,'assist',1,'2026-09-04 19:56:54');
+INSERT INTO "stat_events" VALUES(5,1,1,'assist',1,'2026-09-04 19:56:55');
+INSERT INTO "stat_events" VALUES(6,1,1,'dreb',1,'2026-09-04 19:56:55');
+INSERT INTO "stat_events" VALUES(7,1,1,'block',1,'2026-09-04 19:56:56');
+INSERT INTO "stat_events" VALUES(8,1,1,'ft_made',1,'2026-09-04 19:58:24');
+INSERT INTO "stat_events" VALUES(9,1,1,'ft_made',1,'2026-09-04 19:58:31');
+INSERT INTO "stat_events" VALUES(10,1,1,'ft_made',1,'2026-09-04 19:58:32');
+INSERT INTO "stat_events" VALUES(11,1,1,'ft_missed',1,'2026-09-04 19:58:33');

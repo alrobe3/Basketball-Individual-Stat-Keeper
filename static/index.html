@@ -1,0 +1,449 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#f59e0b">
+<title>Basketball Stat Tracker</title>
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div id="toast" class="toast"></div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal">
+    <div class="modal-card settings-card">
+        <h2>Settings</h2>
+        <p class="small">Save a copy of the current database or restore a previous backup.</p>
+        <div class="actions">
+            <button class="btn primary" onclick="backupDatabase()">Backup Database</button>
+            <button class="btn secondary" onclick="selectDatabaseBackup()">Restore Database</button>
+            <button class="btn secondary" onclick="closeModal('settingsModal')">Close</button>
+        </div>
+        <input id="databaseBackupFile" type="file" accept=".db,application/x-sqlite3" hidden onchange="restoreDatabase(this.files[0])">
+    </div>
+</div>
+
+<!-- SHOT RESULT MODAL -->
+<div id="shotResultModal" class="modal">
+    <div class="modal-card shot-result-card">
+        <h2>Shot Result</h2>
+        <p class="small">Record this <strong id="shotResultType">2PT</strong> shot as:</p>
+        <button class="btn secondary shot-type-toggle" onclick="toggleShotType()">Change Shot Type</button>
+        <div class="shot-result-actions">
+            <button class="btn primary" onclick="saveShot(true)">Make</button>
+            <button class="btn danger" onclick="saveShot(false)">Miss</button>
+        </div>
+        <div class="actions">
+            <button class="btn secondary" onclick="cancelShot()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- SHOT DELETE MODAL -->
+<div id="shotDeleteModal" class="modal">
+    <div class="modal-card shot-result-card">
+        <h2>Delete Shot?</h2>
+        <p class="small">Selected shot: <strong id="deleteShotResult"></strong></p>
+        <div class="shot-result-actions">
+            <button class="btn danger" onclick="deleteSelectedShot()">Delete</button>
+            <button class="btn secondary" onclick="cancelSelectedShot()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<main class="app">
+
+<header class="topbar">
+    <div class="brand">🏀 Basketball Stat Tracker</div>
+    <div class="topbar-actions">
+        <span id="syncStatus" class="status">Ready</span>
+    </div>
+</header>
+
+<!-- LIVE GAME -->
+<section id="live" class="screen active">
+
+    <div class="card toolbar">
+        <div>
+            <label>Game</label>
+            <select id="gameSelect"></select>
+        </div>
+        <div>
+            <label>Player</label>
+            <select id="livePlayer">
+                <option value="__add_new__">Add new player...</option>
+            </select>
+        </div>
+        <button class="btn primary" onclick="openGameModal()">New Game</button>
+    </div>
+
+    <div id="liveEmpty" class="card empty">
+        Create a game and add active players to begin live tracking.
+    </div>
+
+    <div id="liveBody" style="display:none">
+
+        <div class="card">
+            <div class="score">
+                <span>Us</span>
+                <input id="teamScore" type="number" min="0">
+                <span>Opponent</span>
+                <input id="oppScore" type="number" min="0">
+                <button class="btn secondary" onclick="saveScore()">Save</button>
+                <button class="btn secondary" onclick="finishGame()">Finish Game</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div id="statsGrid" class="stats-grid"></div>
+        </div>
+
+        <div class="card">
+            <div class="court-wrap">
+                <canvas id="court" class="court" width="720" height="650"></canvas>
+            </div>
+            <div class="small">Long-press the court to record a shot, or tap an existing shot to delete it. The app estimates 2PT/3PT; use the toggle to override.</div>
+            <div class="actions">
+                <button id="shotType" class="btn secondary" onclick="toggleShotType()">Pending: Auto</button>
+                <button class="btn secondary" onclick="shareShotChart()">Share Shot Chart</button>
+                
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="control-grid">
+                <button class="primary" onclick="saveShot(true)">Made Shot</button>
+                <button onclick="saveShot(false)">Missed Shot</button>
+                <button onclick="deleteShot()">Delete Shot</button>
+                <button onclick="eventStat('ft_made')">Made FT</button>
+                <button onclick="eventStat('ft_missed')">Missed FT</button>
+                <button onclick="clearChart()">Clear Chart</button>
+                <button onclick="eventStat('assist')">+ Assist</button>
+                <button onclick="eventStat('steal')">+ Steal</button>
+                <button onclick="eventStat('oreb')">+ Off Rebound</button>
+                <button onclick="eventStat('dreb')">+ Def Rebound</button>
+                <button onclick="eventStat('turnover')">+ Turnover</button>
+                <button onclick="eventStat('block')">+ Block</button>
+            </div>
+            <div class="actions">
+                <button class="btn secondary" onclick="removeLatestStat()">Remove Latest Non-shot Stat</button>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- PLAYERS -->
+<section id="players" class="screen">
+    <div class="card">
+        <div class="topbar">
+            <h2>Players</h2>
+            <button class="btn primary" onclick="openPlayerModal()">Add Player</button>
+        </div>
+        <div style="overflow:auto">
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Name</th><th>Position</th><th>Graduation</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody id="playersTable"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- SEASONS -->
+<section id="seasons" class="screen">
+    <div class="card">
+        <div class="topbar">
+            <div>
+                <h2>Season Management</h2>
+                <div id="activeSeasonBanner" class="small" style="margin-top:4px"></div>
+            </div>
+            <button class="btn primary" onclick="openSeasonModal()">Add Season</button>
+        </div>
+        <div style="overflow:auto">
+            <table>
+                <thead>
+                    <tr><th>Season Name</th><th>Start</th><th>End</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody id="seasonsTable"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- OPPONENTS & LOCATIONS -->
+<section id="reference" class="screen">
+
+    <div class="card">
+        <div class="topbar">
+            <div>
+                <h2>Opponents &amp; Locations</h2>
+                <div class="small">Manage the opponent teams and venues used across New Game and Edit Game</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid two">
+
+        <div class="card">
+            <div class="topbar">
+                <h3 style="margin:0">Opponents</h3>
+                <button class="btn primary" onclick="openOpponentModal()">Add Opponent</button>
+            </div>
+            <div id="opponentsList" class="ref-list"></div>
+        </div>
+
+        <div class="card">
+            <div class="topbar">
+                <h3 style="margin:0">Locations</h3>
+                <button class="btn primary" onclick="openLocationModal()">Add Location</button>
+            </div>
+            <div id="locationsList" class="ref-list"></div>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- GAME MANAGEMENT -->
+<section id="gameManagement" class="screen">
+
+    <div class="card">
+        <div class="topbar">
+            <div>
+                <h2>Game Management</h2>
+                <div class="small">Manage active and previous games</div>
+            </div>
+            <button class="btn primary" onclick="openGameModal()">New Game</button>
+        </div>
+
+        <div class="game-filter-buttons">
+            <button id="activeGamesFilter" class="btn primary" onclick="setGameManagementFilter('active')">Active Games</button>
+            <button id="previousGamesFilter" class="btn secondary" onclick="setGameManagementFilter('previous')">Previous Games</button>
+            <button id="allGamesFilter" class="btn secondary" onclick="setGameManagementFilter('all')">All Games</button>
+        </div>
+    </div>
+
+    <div id="gameManagementList"></div>
+
+</section>
+
+<!-- STATS -->
+<section id="stats" class="screen">
+    <div class="card toolbar">
+        <div>
+            <label>Player</label>
+            <select id="statsPlayer" onchange="loadPlayerStats()"></select>
+        </div>
+        <div>
+            <label>Season</label>
+            <select id="statsSeason" onchange="loadPlayerStats()"></select>
+        </div>
+    </div>
+    <div id="statsContent"></div>
+</section>
+
+<!-- REPORTS -->
+<section id="reports" class="screen">
+    <div class="card">
+        <h2>PDF Game Reports</h2>
+        <p>Select a season to filter games, or download a full season summary report.</p>
+
+        <div class="toolbar">
+            <div>
+                <label>Season</label>
+                <select id="reportSeason" onchange="renderReports()"></select>
+            </div>
+            <div style="align-self:end">
+                <button id="seasonReportBtn" class="btn primary" onclick="downloadSeasonReport()">Download Season Summary PDF</button>
+            </div>
+        </div>
+
+        <div style="overflow:auto; margin-top:16px">
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>Opponent</th><th>Season</th><th>Status</th><th>Score</th><th></th></tr>
+                </thead>
+                <tbody id="reportsTable"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<!-- PLAYER MODAL -->
+<div id="playerModal" class="modal">
+    <div class="modal-card">
+        <h2 id="playerModalTitle">Add Player</h2>
+        <form id="playerForm" class="form-grid">
+            <input type="hidden" id="playerId">
+            <div><label>First Name</label><input id="firstName" required></div>
+            <div><label>Last Name</label><input id="lastName" required></div>
+            <div><label>Jersey #</label><input id="jersey" type="number"></div>
+            <div><label>Position</label><input id="position"></div>
+            <div><label>Height</label><input id="height" placeholder="6'1&quot;"></div>
+            <div><label>Weight</label><input id="weight" type="number"></div>
+            <div><label>Graduation Year</label><input id="gradYear" type="number"></div>
+            <div>
+                <label>Status</label>
+                <select id="playerActive">
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                </select>
+            </div>
+        </form>
+        <div class="actions">
+            <button class="btn primary" onclick="savePlayer()">Save</button>
+            <button class="btn secondary" onclick="closeModal('playerModal')">Cancel</button>
+            <button id="deletePlayerBtn" class="btn danger" onclick="deletePlayer()" style="display:none">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- SEASON MODAL -->
+<div id="seasonModal" class="modal">
+    <div class="modal-card">
+        <h2 id="seasonModalTitle">Add Season</h2>
+        <form class="form-grid">
+            <input type="hidden" id="seasonId">
+            <div><label>Season Name</label><input id="seasonName" required placeholder="2026-2027"></div>
+            <div><label>Start Date</label><input id="seasonStart" type="date"></div>
+            <div><label>End Date</label><input id="seasonEnd" type="date"></div>
+            <div>
+                <label>Status</label>
+                <select id="seasonActive">
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
+                </select>
+            </div>
+        </form>
+        <div class="actions">
+            <button class="btn primary" onclick="saveSeason()">Save</button>
+            <button class="btn secondary" onclick="closeModal('seasonModal')">Cancel</button>
+            <button id="deleteSeasonBtn" class="btn danger" onclick="deleteSeason()" style="display:none">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- OPPONENT MODAL -->
+<div id="opponentModal" class="modal">
+    <div class="modal-card">
+        <h2 id="opponentModalTitle">Add Opponent</h2>
+        <input type="hidden" id="opponentId">
+        <div>
+            <label>Opponent Name</label>
+            <input id="opponentName" required placeholder="Greenville High School">
+        </div>
+        <div class="actions">
+            <button class="btn primary" onclick="saveOpponent()">Save</button>
+            <button class="btn secondary" onclick="closeModal('opponentModal')">Cancel</button>
+            <button id="deleteOpponentBtn" class="btn danger" onclick="deleteOpponent()" style="display:none">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- LOCATION MODAL -->
+<div id="locationModal" class="modal">
+    <div class="modal-card">
+        <h2 id="locationModalTitle">Add Location</h2>
+        <input type="hidden" id="locationId">
+        <div>
+            <label>Location Name</label>
+            <input id="locationName" required placeholder="Home Gym">
+        </div>
+        <div class="actions">
+            <button class="btn primary" onclick="saveLocation()">Save</button>
+            <button class="btn secondary" onclick="closeModal('locationModal')">Cancel</button>
+            <button id="deleteLocationBtn" class="btn danger" onclick="deleteLocation()" style="display:none">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- NEW GAME MODAL -->
+<div id="gameModal" class="modal">
+    <div class="modal-card">
+        <h2>New Game</h2>
+        <div class="form-grid">
+            <div><label>Season</label><select id="gameSeason"></select></div>
+            <div><label>Opponent</label><select id="opponent"></select></div>
+            <div><label>Date</label><input id="gameDate" type="date"></div>
+            <div><label>Location</label><select id="location"></select></div>
+            <div>
+                <label>Team Level</label>
+                <select id="teamLevel">
+                    <option>Varsity</option>
+                    <option>JV</option>
+                    <option>Other</option>
+                </select>
+            </div>
+        </div>
+        <div class="topbar">
+            <h3>Active Players</h3>
+            <select id="newGamePlayerChoice" class="new-game-player-choice" aria-label="Add player to new game">
+                <option value="__add_new__">Add new player...</option>
+            </select>
+        </div>
+        <div id="gamePlayers"></div>
+        <div class="actions">
+            <button class="btn primary" onclick="saveGame()">Create Game</button>
+            <button class="btn secondary" onclick="closeModal('gameModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT GAME MODAL -->
+<div id="editGameModal" class="modal">
+    <div class="modal-card">
+
+        <div class="topbar">
+            <h2>Edit Game</h2>
+            <button class="btn secondary" onclick="closeModal('editGameModal')">Close</button>
+        </div>
+
+        <input id="editGameId" type="hidden">
+
+        <div class="form-grid">
+            <div><label>Season</label><select id="editGameSeason"></select></div>
+            <div><label>Opponent</label><select id="editGameOpponent"></select></div>
+            <div><label>Game Date</label><input id="editGameDate" type="date"></div>
+            <div><label>Location</label><select id="editGameLocation"></select></div>
+            <div>
+                <label>Team Level</label>
+                <select id="editGameLevel">
+                    <option value="Varsity">Varsity</option>
+                    <option value="JV">JV</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div>
+                <label>Status</label>
+                <select id="editGameStatus">
+                    <option value="live">Active</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="final">Final</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div><label>Team Score</label><input id="editGameTeamScore" type="number" min="0"></div>
+            <div><label>Opponent Score</label><input id="editGameOpponentScore" type="number" min="0"></div>
+        </div>
+
+        <h3>Players</h3>
+        <div id="editGamePlayers" class="game-player-list"></div>
+
+        <div class="actions">
+            <button class="btn primary" onclick="saveEditedGame()">Save Changes</button>
+            <button class="btn secondary" onclick="closeModal('editGameModal')">Cancel</button>
+        </div>
+
+    </div>
+</div>
+
+<script src="/static/app.js?v=20260906-4"></script>
+</body>
+</html>

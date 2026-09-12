@@ -1,0 +1,6 @@
+
+fastapi>=0.115,<1
+uvicorn==0.30.6
+reportlab==4.2.2
+toga>=0.5,<1
+briefcase>=0.4,<1

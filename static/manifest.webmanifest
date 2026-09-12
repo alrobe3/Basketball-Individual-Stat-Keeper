@@ -1,0 +1,16 @@
+{
+  "name": "Basketball Stat Tracker",
+  "short_name": "Hoops Stats",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#d8d5c3",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

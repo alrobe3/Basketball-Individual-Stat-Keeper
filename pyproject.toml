@@ -1,0 +1,46 @@
+[build-system]
+requires = ["briefcase"]
+build-backend = "briefcase.build"
+
+[tool.briefcase]
+project_name = "Basketball Stat Tracker"
+bundle = "com.basketballstattracker"
+version = "0.8.2"
+url = "https://example.com/basketball-stat-tracker"
+license = "MIT"
+license-files = ["LICENSE"]
+author = "Basketball Stat Tracker - Adam Roberts"
+author_email = "support@example.com"
+
+[tool.briefcase.app.basketballstattracker]
+formal_name = "Basketball Stat Tracker"
+description = "Track basketball games, players, shots, and statistics."
+icon = "static/icon"
+sources = ["app.py", "basketballstattracker", "static"]
+requires = [
+    "fastapi>=0.115,<1",
+    "uvicorn==0.30.6",
+    "reportlab==4.2.2",
+]
+
+[tool.briefcase.app.basketballstattracker.android]
+build_gradle_extra_content = """
+chaquopy.defaultConfig.staticProxy("toga_android.widgets.internal.webview")
+"""
+build_gradle_dependencies = [
+    "androidx.appcompat:appcompat:1.0.2",
+    "androidx.constraintlayout:constraintlayout:1.1.3",
+    "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+    "androidx.webkit:webkit:1.15.0",
+]
+requires = [
+    "toga-android~=0.5.6",
+]
+
+[tool.briefcase.app.basketballstattracker.windows]
+requires = [
+    "toga-winforms~=0.5.6",
+]
+
+[tool.briefcase.app.basketballstattracker.web]
+supported = false
