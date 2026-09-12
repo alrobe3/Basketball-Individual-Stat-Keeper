@@ -1132,16 +1132,10 @@ def main():
                 ('Stats', 'stats', 60),
                 ('Reports', 'reports', 70),
             ]
-            navigation_group = Group(
-                'Navigate',
+            data_group = Group(
+                'Settings & Data',
                 parent=Group.COMMANDS,
                 order=10,
-                id='navigation'
-            )
-            data_group = Group(
-                'Data & Settings',
-                parent=Group.COMMANDS,
-                order=20,
                 id='data-settings'
             )
 
@@ -1150,7 +1144,7 @@ def main():
                     Command(
                         lambda widget, screen_id=screen_id: self.open_screen(screen_id, widget),
                         label,
-                        group=navigation_group,
+                        group=Group.COMMANDS,
                         order=order,
                         id=f'screen-{screen_id}'
                     )
