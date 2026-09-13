@@ -192,6 +192,7 @@ async function init() {
 
     renderAll();
     setupCourt();
+    setupShotTypeLabel();
     drawCourt();
 
     $('opponent')?.addEventListener('change', async () => {
@@ -229,6 +230,28 @@ async function init() {
             loadGame(S.game.id, true);
         }
     }, 5000);
+}
+
+function setupShotTypeLabel() {
+    const shotTypeButton = $('shotType');
+    const abbreviations = {
+        'Pending: Auto': 'PA',
+        'Pending: 3PT': 'P3',
+        'Pending: 2PT': 'P2'
+    };
+    const updateLabel = () => {
+        const fullLabel = shotTypeButton.textContent.trim();
+        const match = Object.entries(abbreviations).find(([full]) => fullLabel.includes(full));
+        if (match && shotTypeButton.textContent.trim() !== match[1]) {
+            shotTypeButton.textContent = match[1];
+        }
+    };
+    new MutationObserver(updateLabel).observe(shotTypeButton, {
+        childList: true,
+        characterData: true,
+        subtree: true
+    });
+    updateLabel();
 }
 
 function renderAll() {

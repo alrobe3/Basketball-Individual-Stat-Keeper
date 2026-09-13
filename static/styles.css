@@ -9,6 +9,8 @@ button,input,select{font:inherit}
 .topbar-actions{display:flex;align-items:center;gap:8px}
 .status{font-size:12px;padding:6px 10px;border-radius:99px;background:#fff}
 .card{background:var(--card);border-radius:24px;padding:18px;box-shadow:0 5px 10px #0005;margin-bottom:16px}
+.liveBody-shot-chart-card{padding-left:0;padding-right:0}
+.liveBody-shot-chart-card>.shot-chart-heading,.liveBody-shot-chart-card>.small{padding-left:18px;padding-right:18px}
 .screen{display:none}
 .screen.active{display:block}
 .grid{display:grid;gap:14px}
@@ -33,6 +35,11 @@ input,select{width:100%;padding:11px;border:1px solid #ccc;border-radius:12px;ba
 .shot-legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;border:1px solid #fff;box-shadow:0 1px 2px #0005}
 .shot-legend-dot.made{background:#14953b}
 .shot-legend-dot.missed{background:#df3434}
+.shot-chart-fabs{position:absolute;right:14px;bottom:14px;display:flex;gap:8px;z-index:2}
+.shot-chart-fab{width:50px;height:50px;padding:0;border:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#161616;color:#fff;box-shadow:0 4px 10px #0007;cursor:pointer;font-weight:800}
+.shot-chart-fab:hover{transform:translateY(-1px)}
+.shot-chart-fab.share-fab{background:var(--orange);color:#111}
+.shot-chart-fab svg{width:23px;height:23px;fill:currentColor}
 .control-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .control-grid button{border:0;border-radius:28px;padding:14px 6px;cursor:pointer}
 table{width:100%;border-collapse:collapse;display:block;overflow-x:auto}
@@ -103,6 +110,7 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
     .nav button{font-size:10px;padding:9px 3px}
     .card{padding:14px}
     .app{padding:8px 8px 88px}
+    .shot-chart-fabs{right:10px;bottom:10px}
     .brand{font-size:18px}
     .score{flex-wrap:wrap;gap:8px;font-size:18px}
     .score input{width:56px;flex:0 0 56px}

@@ -133,7 +133,7 @@
 
     <div id="liveBody" style="display:none">
 
-        <div class="card">
+        <div class="card liveBody-shot-chart-card">
             <div class="shot-chart-heading">
                 <h2>Shot Chart</h2>
                 <div class="shot-chart-legend" aria-label="Shot result legend">
@@ -143,13 +143,14 @@
             </div>
             <div class="court-wrap">
                 <canvas id="court" class="court" width="720" height="650"></canvas>
+                <div class="shot-chart-fabs" aria-label="Shot chart actions">
+                    <button id="shotType" class="shot-chart-fab shot-type-fab" onclick="toggleShotType()" title="Change shot type" aria-label="Change shot type">PA</button>
+                    <button class="shot-chart-fab share-fab" onclick="shareShotChart()" title="Share shot chart" aria-label="Share shot chart">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7a3.3 3.3 0 0 0 0-1.4l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.03.47.08.69L8.03 9.8a3 3 0 1 0 0 4.4l7.12 4.16c-.05.2-.08.42-.08.64a2.93 2.93 0 1 0 2.93-2.92Z"/></svg>
+                    </button>
+                </div>
             </div>
             <div class="small">Double-tap the court to record a shot. Long-press to open the stat menu. Long-press an existing shot to select it for deletion.</div>
-            <div class="actions">
-                <button id="shotType" class="btn secondary" onclick="toggleShotType()">Pending: Auto</button>
-                <button class="btn secondary" onclick="shareShotChart()">Share Shot Chart</button>
-                
-            </div>
         </div>
 
         <div class="card">
