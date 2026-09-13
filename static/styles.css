@@ -26,6 +26,13 @@ input,select{width:100%;padding:11px;border:1px solid #ccc;border-radius:12px;ba
 .pill{margin-top:6px;background:var(--orange);padding:8px 5px;border-radius:20px;font-weight:700;white-space:nowrap}
 .court-wrap{position:relative;max-width:720px;margin:auto}
 .court{display:block;width:100%;aspect-ratio:1.1;background:#c7aa6b;border:2px solid #222;border-radius:12px;touch-action:none}
+.shot-chart-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.shot-chart-heading h2{margin:0;font-size:20px}
+.shot-chart-legend{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.shot-legend-item{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.shot-legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;border:1px solid #fff;box-shadow:0 1px 2px #0005}
+.shot-legend-dot.made{background:#14953b}
+.shot-legend-dot.missed{background:#df3434}
 .control-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .control-grid button{border:0;border-radius:28px;padding:14px 6px;cursor:pointer}
 table{width:100%;border-collapse:collapse;display:block;overflow-x:auto}
@@ -56,6 +63,12 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
 .score{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}
 .score input{width:75px;text-align:center}
 .small{font-size:12px;color:var(--muted)}
+.floating-game-toolbar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:25;display:flex;align-items:center;gap:4px;width:min(520px,calc(100% - 24px));padding:7px;background:#161616;border:1px solid #3a3a3a;border-radius:22px;box-shadow:0 8px 24px #0008}
+.floating-game-action{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:16px;padding:10px 7px;background:transparent;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.floating-game-action:hover{background:#2a2a2a}
+.floating-game-action.finish{background:#b3261e}
+.floating-game-action.finish:hover{background:#d13a30}
+.floating-game-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:16px;line-height:1}
 
 .game-filter-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .game-management-card{position:relative}
@@ -92,6 +105,10 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
     .score{flex-wrap:wrap;gap:8px;font-size:18px}
     .score input{width:56px;flex:0 0 56px}
     .score button{flex:1 1 120px;min-width:0}
+    .shot-chart-heading{align-items:flex-start;flex-direction:column}
+    .shot-chart-legend{justify-content:flex-start;gap:10px}
+    .floating-game-toolbar{bottom:calc(8px + env(safe-area-inset-bottom));width:calc(100% - 16px)}
+    .floating-game-action{font-size:11px;padding:9px 3px;gap:3px}
     .game-management-heading{display:block}
     .game-management-score{display:inline-block;margin-top:10px}
     .game-management-actions .btn{flex:1 1 calc(50% - 8px)}

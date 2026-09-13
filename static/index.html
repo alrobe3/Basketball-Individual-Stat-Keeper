@@ -123,6 +123,13 @@
         </div>
 
         <div class="card">
+            <div class="shot-chart-heading">
+                <h2>Shot Chart</h2>
+                <div class="shot-chart-legend" aria-label="Shot result legend">
+                    <span class="shot-legend-item"><span class="shot-legend-dot made"></span>Made Shot</span>
+                    <span class="shot-legend-item"><span class="shot-legend-dot missed"></span>Missed Shot</span>
+                </div>
+            </div>
             <div class="court-wrap">
                 <canvas id="court" class="court" width="720" height="650"></canvas>
             </div>
@@ -136,6 +143,21 @@
 
         <div class="card">
             <div id="statsGrid" class="stats-grid"></div>
+        </div>
+
+        <div class="floating-game-toolbar" role="toolbar" aria-label="Game actions">
+            <button class="floating-game-action" onclick="openGameModal()" title="New Game">
+                <span class="floating-game-icon">+</span>
+                <span>New Game</span>
+            </button>
+            <button class="floating-game-action" onclick="saveScore()" title="Save Game">
+                <span class="floating-game-icon">&#10003;</span>
+                <span>Save Game</span>
+            </button>
+            <button class="floating-game-action finish" onclick="finishGame()" title="Finish Game">
+                <span class="floating-game-icon">&#9632;</span>
+                <span>Finish Game</span>
+            </button>
         </div>
 
     </div>
