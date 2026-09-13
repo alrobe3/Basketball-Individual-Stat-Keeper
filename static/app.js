@@ -1073,20 +1073,11 @@ async function loadGame(id, silent = false) {
     }
 
     const oldPid = +$('livePlayer').value;
-    const scoreEditingBeforeLoad = ['teamScore', 'oppScore']
-        .some(scoreId => document.activeElement === $(scoreId));
     S.game = await api(`/api/games/${id}`);
 
     $('liveEmpty').style.display = 'none';
     $('liveBody').style.display = 'block';
     $('gameSelect').value = id;
-    const scoreEditingAfterLoad = ['teamScore', 'oppScore']
-        .some(scoreId => document.activeElement === $(scoreId));
-    if (!scoreEditingBeforeLoad && !scoreEditingAfterLoad) {
-        $('teamScore').value = S.game.team_score;
-        $('oppScore').value = S.game.opponent_score;
-    }
-
     $('livePlayer').innerHTML = S.game.players.map(p => `
         <option value="${p.id}">#${p.jersey_number ?? ''} ${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</option>
     `).join('') + '<option value="${ADD_NEW_VALUE}">Add new player...</option>';
@@ -1147,22 +1138,26 @@ function renderLive() {
 }
 
 async function saveScore() {
-    await api(`/api/games/${S.game.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-            team_score: +$('teamScore').value,
-            opponent_score: +$('oppScore').value
-        })
-    });
-    await refreshGame();
+    toast('Game saved');
 }
 
 async function finishGame() {
+    $('finishTeamScore').value = S.game?.team_score ?? 0;
+    $('finishOpponentScore').value = S.game?.opponent_score ?? 0;
+    openModal('finishGameModal');
+}
+
+async function confirmFinishGame() {
     await api(`/api/games/${S.game.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ status: 'final' })
+        body: JSON.stringify({
+            status: 'final',
+            team_score: +$('finishTeamScore').value || 0,
+            opponent_score: +$('finishOpponentScore').value || 0
+        })
     });
 
+    closeModal('finishGameModal');
     await reloadGames();
     await refreshGame();
 }

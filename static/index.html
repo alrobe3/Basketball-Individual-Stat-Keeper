@@ -54,6 +54,28 @@
     </div>
 </div>
 
+<!-- FINISH GAME SCORE MODAL -->
+<div id="finishGameModal" class="modal">
+    <div class="modal-card finish-game-card">
+        <h2>Finish Game</h2>
+        <p class="small">Enter the final score.</p>
+        <div class="finish-score-grid">
+            <div>
+                <label for="finishTeamScore">Us</label>
+                <input id="finishTeamScore" type="number" min="0" inputmode="numeric">
+            </div>
+            <div>
+                <label for="finishOpponentScore">Opponent</label>
+                <input id="finishOpponentScore" type="number" min="0" inputmode="numeric">
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn primary" onclick="confirmFinishGame()">Finish Game</button>
+            <button class="btn secondary" onclick="closeModal('finishGameModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <main class="app">
 
 <header class="topbar">
@@ -110,17 +132,6 @@
     </div>
 
     <div id="liveBody" style="display:none">
-
-        <div class="card">
-            <div class="score">
-                <span>Us</span>
-                <input id="teamScore" type="number" min="0">
-                <span>Opponent</span>
-                <input id="oppScore" type="number" min="0">
-                <button class="btn secondary" onclick="saveScore()">Save</button>
-                <button class="btn secondary" onclick="finishGame()">Finish Game</button>
-            </div>
-        </div>
 
         <div class="card">
             <div class="shot-chart-heading">

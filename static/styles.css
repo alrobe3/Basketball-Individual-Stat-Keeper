@@ -50,6 +50,8 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
 .shot-delete-card.arrow-bottom::before{bottom:-8px;border-right:1px solid #ddd;border-bottom:1px solid #ddd}
 .settings-card{width:min(420px,100%)}
 .shot-result-card{width:min(360px,100%);text-align:center}
+.finish-game-card{width:min(420px,100%)}
+.finish-score-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
 .stat-menu-card{width:min(420px,100%)}
 .stat-menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .stat-menu-grid button{border:0;border-radius:18px;padding:12px 8px;cursor:pointer}
