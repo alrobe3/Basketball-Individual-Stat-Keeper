@@ -81,12 +81,47 @@
 <header class="topbar">
     <div class="brand">🏀 Basketball Stat Tracker</div>
     <div class="topbar-actions">
+        <button class="btn secondary compact" onclick="goHome()">⌂ Home</button>
         <span id="syncStatus" class="status">Ready</span>
     </div>
 </header>
 
+<!-- HOME -->
+<section id="home" class="screen active">
+    <div class="card home-hero">
+        <h2 style="margin:0 0 4px">🏀 Basketball Stat Tracker</h2>
+        <div class="small">Pick an option to get started</div>
+    </div>
+    <div class="home-grid">
+        <button class="home-btn primary" onclick="openGameModal()">
+            <span class="home-btn-icon">➕</span>
+            <span>New Game</span>
+        </button>
+        <button class="home-btn" onclick="continueGame()">
+            <span class="home-btn-icon">▶️</span>
+            <span>Continue Game</span>
+        </button>
+        <button class="home-btn" onclick="switchToScreen('players')">
+            <span class="home-btn-icon">👥</span>
+            <span>Players</span>
+        </button>
+        <button class="home-btn" onclick="goToOpponents()">
+            <span class="home-btn-icon">🤝</span>
+            <span>Opponents</span>
+        </button>
+        <button class="home-btn" onclick="goToLocations()">
+            <span class="home-btn-icon">📍</span>
+            <span>Locations</span>
+        </button>
+        <button class="home-btn" onclick="switchToScreen('seasons')">
+            <span class="home-btn-icon">📅</span>
+            <span>Seasons</span>
+        </button>
+    </div>
+</section>
+
 <!-- LIVE GAME -->
-<section id="live" class="screen active">
+<section id="live" class="screen">
 
     <div class="card toolbar">
         <div>
@@ -228,7 +263,7 @@
 
     <div class="grid two">
 
-        <div class="card">
+        <div class="card" id="opponentsCard">
             <div class="topbar">
                 <h3 style="margin:0">Opponents</h3>
                 <button class="btn primary" onclick="openOpponentModal()">Add Opponent</button>
@@ -236,7 +271,7 @@
             <div id="opponentsList" class="ref-list"></div>
         </div>
 
-        <div class="card">
+        <div class="card" id="locationsCard">
             <div class="topbar">
                 <h3 style="margin:0">Locations</h3>
                 <button class="btn primary" onclick="openLocationModal()">Add Location</button>
@@ -483,6 +518,6 @@
     </div>
 </div>
 
-<script src="/static/app.js?v=20260906-4"></script>
+<script src="/static/app.js?v=20260913-1"></script>
 </body>
 </html>

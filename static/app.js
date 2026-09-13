@@ -163,6 +163,26 @@ function switchToScreen(screenName) {
     }
 }
 
+function goHome() {
+    switchToScreen('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function continueGame() {
+    setGameManagementFilter('active');
+    switchToScreen('gameManagement');
+}
+
+function goToOpponents() {
+    switchToScreen('reference');
+    setTimeout(() => $('opponentsCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+
+function goToLocations() {
+    switchToScreen('reference');
+    setTimeout(() => $('locationsCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+
 document.querySelectorAll('.nav button').forEach(button => {
     button.onclick = () => {
         switchToScreen(button.dataset.screen);
