@@ -1494,13 +1494,70 @@ function dot(ctx, x, y, color, r) {
     ctx.stroke();
 }
 
+function createShareChartCanvas() {
+    const court = $('court');
+    const player = currentPlayer();
+    const stats = player?.stats;
+    const shareCanvas = document.createElement('canvas');
+    const headerHeight = 190;
+    shareCanvas.width = court.width;
+    shareCanvas.height = court.height + headerHeight;
+
+    const ctx = shareCanvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, shareCanvas.width, shareCanvas.height);
+    ctx.fillStyle = '#161616';
+    ctx.fillRect(0, 0, shareCanvas.width, headerHeight);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 28px sans-serif';
+    ctx.fillText(
+        `${player ? `#${player.jersey_number ?? ''} ${player.first_name} ${player.last_name}` : 'Shot Chart'}`,
+        24,
+        38
+    );
+    ctx.font = '18px sans-serif';
+    ctx.fillText(
+        `${S.game?.opponent ? `vs ${S.game.opponent}` : ''}${S.game?.game_date ? `  ${S.game.game_date}` : ''}`,
+        24,
+        68
+    );
+
+    const statValues = stats ? [
+        ['PTS', stats.pts],
+        ['FG', `${stats.fgm}/${stats.fga}`],
+        ['3PT', `${stats.tpm}/${stats.tpa}`],
+        ['FT', `${stats.ftm}/${stats.fta}`],
+        ['AST', stats.ast],
+        ['REB', stats.oreb + stats.dreb],
+        ['STL', stats.stl],
+        ['BLK', stats.blk],
+        ['TO', stats.to]
+    ] : [];
+    const cellWidth = (shareCanvas.width - 48) / 5;
+    statValues.forEach(([label, value], index) => {
+        const column = index % 5;
+        const row = Math.floor(index / 5);
+        const x = 24 + column * cellWidth;
+        const y = 108 + row * 38;
+        ctx.font = '700 14px sans-serif';
+        ctx.fillStyle = '#ffb52e';
+        ctx.fillText(label, x, y);
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(String(value), x + 42, y);
+    });
+
+    ctx.drawImage(court, 0, headerHeight);
+    return shareCanvas;
+}
+
 async function shareShotChart() {
-    const c = $('court');
+    const shareCanvas = createShareChartCanvas();
     const filename = `shot-chart-${currentPlayer()?.last_name || 'player'}.png`;
 
     try {
         toast('Preparing share...');
-        const blob = await new Promise(resolve => c.toBlob(resolve, 'image/png'));
+        const blob = await new Promise(resolve => shareCanvas.toBlob(resolve, 'image/png'));
         if (!blob) throw new Error('Could not create the shot chart image');
 
         const file = new File([blob], filename, { type: 'image/png' });
