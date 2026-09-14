@@ -172,6 +172,21 @@
             <div id="statsGrid" class="stats-grid"></div>
         </div>
 
+        <div class="card minutes-prototype-card">
+            <div class="minutes-heading">
+                <div>
+                    <h2>Minutes Prototype</h2>
+                    <div class="small">Mock on-court tracking for testing</div>
+                </div>
+                <div id="minutesClock" class="minutes-clock">00:00</div>
+            </div>
+            <div class="minutes-controls">
+                <button id="minutesClockButton" class="btn primary" onclick="toggleMinutesClock()">Start Clock</button>
+                <button class="btn secondary" onclick="resetMinutesPrototype()">Reset</button>
+            </div>
+            <div id="minutesPlayerList" class="minutes-player-list"></div>
+        </div>
+
         <div class="floating-game-toolbar" role="toolbar" aria-label="Game actions">
             <button class="floating-game-action" onclick="openGameModal()" title="New Game">
                 <span class="floating-game-icon">+</span>

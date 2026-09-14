@@ -16,7 +16,14 @@ const S = {
     lastTap: null,
     poll: null,
     gameManagementFilter: 'active',
-    pdfPreview: null
+    pdfPreview: null,
+    minutes: {
+        running: false,
+        elapsed: 0,
+        lastTick: null,
+        timer: null,
+        players: {}
+    }
 };
 
 const ADD_NEW_VALUE = '__add_new__';
@@ -1245,6 +1252,87 @@ function renderLive() {
     `).join('');
 
     drawCourt();
+    renderMinutesPrototype();
+}
+
+function formatMinutesClock(seconds) {
+    const wholeSeconds = Math.max(0, Math.floor(seconds));
+    return `${String(Math.floor(wholeSeconds / 60)).padStart(2, '0')}:${String(wholeSeconds % 60).padStart(2, '0')}`;
+}
+
+function renderMinutesPrototype() {
+    if (!S.game || !$('minutesPlayerList')) return;
+
+    $('minutesClock').textContent = formatMinutesClock(S.minutes.elapsed);
+    $('minutesClockButton').textContent = S.minutes.running ? 'Pause Clock' : 'Start Clock';
+
+    $('minutesPlayerList').innerHTML = S.game.players.map(player => {
+        const state = S.minutes.players[player.id] || { onCourt: false, seconds: 0, enteredAt: null };
+        const liveSeconds = state.onCourt && S.minutes.running && state.enteredAt !== null
+            ? state.seconds + (S.minutes.elapsed - state.enteredAt)
+            : state.seconds;
+        const playerName = `#${player.jersey_number ?? ''} ${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}`;
+        return `
+            <div class="minutes-player-row">
+                <div>
+                    <strong>${playerName}</strong>
+                    <div class="small">${formatMinutesClock(liveSeconds)}</div>
+                </div>
+                <button class="minutes-status ${state.onCourt ? 'on-court' : ''}"
+                    onclick="togglePlayerCourt(${player.id})">
+                    ${state.onCourt ? 'On Court' : 'On Bench'}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleMinutesClock() {
+    if (S.minutes.running) {
+        tickMinutesPrototype();
+        S.minutes.running = false;
+        S.minutes.lastTick = null;
+        clearInterval(S.minutes.timer);
+        S.minutes.timer = null;
+    } else {
+        S.minutes.running = true;
+        S.minutes.lastTick = Date.now();
+        S.minutes.timer = setInterval(tickMinutesPrototype, 250);
+    }
+    renderMinutesPrototype();
+}
+
+function tickMinutesPrototype() {
+    if (!S.minutes.running || S.minutes.lastTick === null) return;
+    const now = Date.now();
+    S.minutes.elapsed += (now - S.minutes.lastTick) / 1000;
+    S.minutes.lastTick = now;
+    renderMinutesPrototype();
+}
+
+function togglePlayerCourt(playerId) {
+    const player = S.minutes.players[playerId] || { onCourt: false, seconds: 0, enteredAt: null };
+    tickMinutesPrototype();
+    if (player.onCourt) {
+        player.seconds += S.minutes.elapsed - player.enteredAt;
+        player.onCourt = false;
+        player.enteredAt = null;
+    } else {
+        player.onCourt = true;
+        player.enteredAt = S.minutes.elapsed;
+    }
+    S.minutes.players[playerId] = player;
+    renderMinutesPrototype();
+}
+
+function resetMinutesPrototype() {
+    clearInterval(S.minutes.timer);
+    S.minutes.running = false;
+    S.minutes.elapsed = 0;
+    S.minutes.lastTick = null;
+    S.minutes.timer = null;
+    S.minutes.players = {};
+    renderMinutesPrototype();
 }
 
 async function saveScore() {

@@ -79,6 +79,15 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
 .score{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}
 .score input{width:75px;text-align:center}
 .small{font-size:12px;color:var(--muted)}
+.minutes-prototype-card{border:2px dashed #9b9b9b}
+.minutes-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.minutes-heading h2{margin:0 0 3px}
+.minutes-clock{font-variant-numeric:tabular-nums;font-size:26px;font-weight:800;color:#161616}
+.minutes-controls{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.minutes-player-list{display:grid;gap:8px}
+.minutes-player-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:#f3f3f3;border-radius:14px}
+.minutes-status{border:0;border-radius:18px;padding:9px 12px;background:#ddd;color:#333;font-weight:700;cursor:pointer}
+.minutes-status.on-court{background:#d9f3df;color:#126b2e}
 .floating-game-toolbar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:25;display:flex;align-items:center;gap:4px;width:min(520px,calc(100% - 24px));padding:7px;background:#cfcfcf;border:1px solid #3a3a3a;border-radius:22px;box-shadow:0 8px 24px #0008}
 .floating-game-action{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:16px;padding:10px 7px;background:transparent;color:#111111;font-size:12px;font-weight:700;cursor:pointer}
 .floating-game-action:hover{background:#2a2a2a}
@@ -127,6 +136,7 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
     .shot-chart-legend{justify-content:flex-start;gap:10px}
     .floating-game-toolbar{bottom:calc(8px + env(safe-area-inset-bottom));width:calc(100% - 16px)}
     .floating-game-action{font-size:11px;padding:9px 3px;gap:3px}
+    .minutes-heading{align-items:flex-start;flex-direction:column}
     .game-management-heading{display:block}
     .game-management-score{display:inline-block;margin-top:10px}
     .game-management-actions .btn{flex:1 1 calc(50% - 8px)}
