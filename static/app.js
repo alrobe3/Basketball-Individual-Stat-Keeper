@@ -11,6 +11,7 @@ const S = {
     selectedShotId: null,
     addingPlayerToNewGame: false,
     opponentSelectAfterSave: null,
+    locationSelectAfterSave: null,
     shotPressTimer: null,
     lastTap: null,
     poll: null,
@@ -124,6 +125,9 @@ function closeModal(id) {
     }
     if (id === 'opponentModal') {
         S.opponentSelectAfterSave = null;
+    }
+    if (id === 'locationModal') {
+        S.locationSelectAfterSave = null;
     }
 }
 
@@ -567,6 +571,7 @@ function openLocationModal(id) {
 async function saveLocation() {
     const id = $('locationId').value;
     const name = $('locationName').value.trim();
+    const selectAfterSave = S.locationSelectAfterSave;
 
     if (!name) {
         toast('Location name is required');
@@ -584,6 +589,9 @@ async function saveLocation() {
 
         closeModal('locationModal');
         renderAll();
+        if (selectAfterSave) {
+            populateNameDropdown(selectAfterSave, S.locations, name, 'Add new location');
+        }
         toast('Location saved');
     }
     catch (e) {
@@ -650,6 +658,13 @@ async function handleAddNewChoice(selectEl, endpoint, listRefName, label) {
         S.opponentSelectAfterSave = selectEl;
         selectEl.value = '';
         openOpponentModal();
+        return '';
+    }
+
+    if (endpoint === '/api/locations') {
+        S.locationSelectAfterSave = selectEl;
+        selectEl.value = '';
+        openLocationModal();
         return '';
     }
 
