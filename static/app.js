@@ -14,7 +14,8 @@ const S = {
     shotPressTimer: null,
     lastTap: null,
     poll: null,
-    gameManagementFilter: 'active'
+    gameManagementFilter: 'active',
+    pdfPreview: null
 };
 
 const ADD_NEW_VALUE = '__add_new__';
@@ -731,13 +732,20 @@ function renderReports() {
             <td>${escapeHtml(g.season_name)}</td>
             <td>${escapeHtml(g.status)}</td>
             <td>${g.team_score ?? 0} - ${g.opponent_score ?? 0}</td>
-            <td><button class="btn primary" onclick="shareGameReport(${g.id})">Share PDF</button></td>
+            <td>
+                <button class="btn secondary" onclick="previewGameReport(${g.id})">Preview</button>
+                <button class="btn primary" onclick="shareGameReport(${g.id})">Share PDF</button>
+            </td>
         </tr>
     `).join('');
 }
 
 async function shareGameReport(gameId) {
     await shareReportFile(`/api/games/${gameId}/report.pdf`, `game-${gameId}-report.pdf`);
+}
+
+async function previewGameReport(gameId) {
+    await previewReportFile(`/api/games/${gameId}/report.pdf`, `game-${gameId}-report.pdf`);
 }
 
 async function shareSeasonReport() {
@@ -752,6 +760,46 @@ async function shareSeasonReport() {
         `/api/seasons/${seasonId}/report.pdf`,
         `season-${seasonId}-summary.pdf`
     );
+}
+
+async function previewSeasonReport() {
+    const seasonId = $('reportSeason').value;
+    if (!seasonId) {
+        toast('Select a season first');
+        return;
+    }
+    await previewReportFile(
+        `/api/seasons/${seasonId}/report.pdf`,
+        `season-${seasonId}-summary.pdf`
+    );
+}
+
+async function previewReportFile(url, filename) {
+    try {
+        toast('Preparing PDF preview...');
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Could not create the PDF report');
+        const blob = await response.blob();
+        const previewUrl = URL.createObjectURL(blob);
+        $('pdfPreviewFrame').src = previewUrl;
+        $('pdfPreviewModal').classList.add('open');
+        S.pdfPreview = { url: previewUrl, reportUrl: url, filename };
+    } catch (error) {
+        toast(error.message || 'Could not preview PDF');
+    }
+}
+
+async function sharePreviewedPdf() {
+    if (S.pdfPreview) {
+        await shareReportFile(S.pdfPreview.reportUrl, S.pdfPreview.filename);
+    }
+}
+
+function closePdfPreview() {
+    closeModal('pdfPreviewModal');
+    if (S.pdfPreview?.url) URL.revokeObjectURL(S.pdfPreview.url);
+    S.pdfPreview = null;
+    $('pdfPreviewFrame').removeAttribute('src');
 }
 
 async function shareReportFile(url, filename) {

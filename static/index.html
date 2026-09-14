@@ -76,6 +76,21 @@
     </div>
 </div>
 
+<!-- PDF PREVIEW MODAL -->
+<div id="pdfPreviewModal" class="modal">
+    <div class="modal-card pdf-preview-card">
+        <div class="pdf-preview-heading">
+            <h2>PDF Preview</h2>
+            <button class="btn secondary" onclick="closePdfPreview()">Back</button>
+        </div>
+        <iframe id="pdfPreviewFrame" title="PDF report preview"></iframe>
+        <div class="actions">
+            <button class="btn primary" onclick="sharePreviewedPdf()">Share PDF</button>
+            <button class="btn secondary" onclick="closePdfPreview()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <main class="app">
 
 <header class="topbar">
@@ -298,7 +313,7 @@
                 <select id="reportSeason" onchange="renderReports()"></select>
             </div>
             <div style="align-self:end">
-                <button id="seasonReportBtn" class="btn primary" onclick="shareSeasonReport()">Share Season Summary PDF</button>
+                <button id="seasonReportBtn" class="btn primary" onclick="previewSeasonReport()">Preview Season Summary PDF</button>
             </div>
         </div>
 

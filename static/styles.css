@@ -54,6 +54,10 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
 #playerModal.open{z-index:60}
 #opponentModal.open{z-index:60}
 .modal-card{background:white;width:min(620px,100%);max-height:90vh;overflow:auto;border-radius:22px;padding:20px}
+.pdf-preview-card{width:min(900px,100%);height:min(90vh,900px);display:flex;flex-direction:column}
+.pdf-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pdf-preview-heading h2{margin:0}
+#pdfPreviewFrame{width:100%;flex:1;min-height:0;border:1px solid #ddd;border-radius:12px;background:#f3f3f3;margin-top:12px}
 .shot-delete-card{overflow:visible}
 .shot-delete-card::before{content:"";position:absolute;left:var(--arrow-left);width:16px;height:16px;background:white;transform:translateX(-50%) rotate(45deg);z-index:0}
 .shot-delete-card.arrow-top::before{top:-8px;border-left:1px solid #ddd;border-top:1px solid #ddd}
