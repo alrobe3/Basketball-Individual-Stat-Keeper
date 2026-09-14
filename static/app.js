@@ -780,6 +780,30 @@ async function previewReportFile(url, filename) {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Could not create the PDF report');
         const blob = await response.blob();
+
+        if (/Android/i.test(navigator.userAgent)) {
+            const pdfData = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Could not read the PDF report'));
+                reader.readAsDataURL(blob);
+            });
+            const nativeResponse = await fetch('/api/share-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename,
+                    content_type: 'application/pdf',
+                    action: 'view',
+                    data: pdfData
+                })
+            });
+            if (!nativeResponse.ok) throw new Error('Could not open the PDF preview');
+            const nativeResult = await nativeResponse.json();
+            window.location.href = new URL(nativeResult.url, window.location.href).href;
+            return;
+        }
+
         const previewUrl = URL.createObjectURL(blob);
         $('pdfPreviewFrame').src = previewUrl;
         $('pdfPreviewModal').classList.add('open');

@@ -1071,6 +1071,7 @@ async def share_file(request: Request):
     encoded_data = payload.get('data', '')
     filename = Path(payload.get('filename', 'shared-file')).name
     content_type = payload.get('content_type', 'application/octet-stream')
+    action = payload.get('action', 'share')
     if ',' not in encoded_data:
         raise HTTPException(400, 'Invalid file data')
 
@@ -1083,7 +1084,7 @@ async def share_file(request: Request):
     file_path = Path.home() / f'.basketball-share-{token}-{filename}'
     file_path.write_bytes(file_bytes)
     SHARE_FILES[token] = (file_path, content_type)
-    return {'url': f'/api/share-image/open?token={token}'}
+    return {'url': f'/api/share-image/open?token={token}&action={action}'}
 
 
 @app.get('/api/share-image/open')
@@ -1201,6 +1202,7 @@ def main():
 
             try:
                 token = urllib.parse.parse_qs(parsed_url.query).get('token', [None])[0]
+                action = urllib.parse.parse_qs(parsed_url.query).get('action', ['share'])[0]
                 share_file = SHARE_FILES.pop(token, None)
                 if share_file is None:
                     raise RuntimeError('The share image expired; try again')
@@ -1221,11 +1223,14 @@ def main():
                     shared_file
                 )
 
-                intent = Intent(Intent.ACTION_SEND)
+                intent = Intent(Intent.ACTION_VIEW if action == 'view' else Intent.ACTION_SEND)
                 intent.setType(content_type)
-                intent.putExtra(Intent.EXTRA_STREAM, image_uri)
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                chooser = Intent.createChooser(intent, 'Share Shot Chart')
+                intent.setDataAndType(image_uri, content_type)
+                if action != 'view':
+                    intent.putExtra(Intent.EXTRA_STREAM, image_uri)
+                chooser_title = 'Preview PDF' if action == 'view' else 'Share Shot Chart'
+                chooser = Intent.createChooser(intent, chooser_title)
                 self._impl.native.startActivity(chooser)
             except Exception as error:
                 message = json.dumps(f'Share failed: {error}')
