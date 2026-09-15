@@ -94,14 +94,69 @@
 <main class="app">
 
 <header class="topbar">
-    <div class="brand">🏀 Basketball Stat Tracker</div>
+    <button class="brand brand-button" onclick="switchToScreen('home')">🏀 Basketball Stat Tracker</button>
     <div class="topbar-actions">
         <span id="syncStatus" class="status">Ready</span>
     </div>
 </header>
 
+<!-- HOME -->
+<section id="home" class="screen active">
+    <div class="home-welcome">
+        <div>
+            <h1 id="homeGreeting">Hello, Coach</h1>
+            <p>Welcome back! What would you like to do today?</p>
+        </div>
+        <button class="home-profile-photo" id="homeProfilePhoto" onclick="switchToScreen('profile')" aria-label="Open profile"></button>
+    </div>
+
+    <div class="home-section-heading">
+        <h2>Quick Access</h2>
+    </div>
+    <div class="home-quick-grid">
+        <button onclick="switchToScreen('home')"><span>🏠</span><strong>Home</strong><small>Dashboard</small></button>
+        <button onclick="switchToScreen('gameManagement')"><span>📋</span><strong>Games</strong><small>View your games</small></button>
+        <button onclick="switchToScreen('stats')"><span>📊</span><strong>Statistics</strong><small>See your progress</small></button>
+        <button onclick="openGameModal()"><span>🗓️</span><strong>New Game</strong><small>Start tracking</small></button>
+        <button onclick="switchToScreen('players')"><span>📖</span><strong>Players</strong><small>Your roster</small></button>
+        <button onclick="switchToScreen('profile')"><span>⚙️</span><strong>Settings</strong><small>Profile details</small></button>
+    </div>
+
+    <div class="home-section-heading home-resume-heading">
+        <h2>Continue Where You Left Off</h2>
+        <button class="home-link" onclick="switchToScreen('gameManagement')">View all</button>
+    </div>
+    <div id="homeActiveGames" class="home-resume-list"></div>
+</section>
+
+<!-- PROFILE -->
+<section id="profile" class="screen">
+    <div class="card profile-card">
+        <div class="profile-heading">
+            <div>
+                <h2>Profile</h2>
+                <p class="small">Your coach contact information</p>
+            </div>
+            <div id="profilePhotoPreview" class="profile-photo-preview"><span>🏀</span></div>
+        </div>
+        <label class="profile-upload btn secondary">
+            Upload Picture
+            <input type="file" accept="image/*" onchange="handleProfilePhoto(this)" hidden>
+        </label>
+        <div class="form-grid profile-form">
+            <div><label for="profileName">Name</label><input id="profileName" placeholder="Coach name"></div>
+            <div><label for="profileEmail">Email</label><input id="profileEmail" type="email" placeholder="coach@example.com"></div>
+            <div><label for="profilePhone">Phone</label><input id="profilePhone" type="tel" placeholder="(555) 555-5555"></div>
+        </div>
+        <div class="actions">
+            <button class="btn primary" onclick="saveProfile()">Save Profile</button>
+            <button class="btn secondary" onclick="switchToScreen('home')">Back Home</button>
+        </div>
+    </div>
+</section>
+
 <!-- LIVE GAME -->
-<section id="live" class="screen active">
+<section id="live" class="screen">
 
     <div class="card toolbar">
         <div>

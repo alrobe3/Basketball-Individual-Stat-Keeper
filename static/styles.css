@@ -6,6 +6,7 @@ button,input,select{font:inherit}
 .app{max-width:1100px;margin:auto;padding:14px 14px 90px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .brand{font-weight:900;font-size:22px}
+.brand-button{border:0;background:transparent;padding:0;cursor:pointer;color:inherit;text-align:left}
 .topbar-actions{display:flex;align-items:center;gap:8px}
 .status{font-size:12px;padding:6px 10px;border-radius:99px;background:#fff}
 .card{background:var(--card);border-radius:24px;padding:18px;box-shadow:0 5px 10px #0005;margin-bottom:16px}
@@ -79,6 +80,33 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
 .score{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}
 .score input{width:75px;text-align:center}
 .small{font-size:12px;color:var(--muted)}
+.home-welcome{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:8px 4px 20px}
+.home-welcome h1{margin:0;font-size:28px}
+.home-welcome p{margin:5px 0 0;color:var(--muted);font-size:13px}
+.home-profile-photo,.profile-photo-preview{width:54px;height:54px;flex:0 0 54px;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#e7ebf2;color:#718096;font-size:25px;cursor:pointer}
+.home-profile-photo img,.profile-photo-preview img{width:100%;height:100%;object-fit:cover}
+.home-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 4px 10px}
+.home-section-heading h2{margin:0;font-size:16px}
+.home-link{border:0;background:transparent;color:#1264d8;font-size:12px;cursor:pointer}
+.home-quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.home-quick-grid button{min-height:92px;border:1px solid #edf0f4;border-radius:16px;background:#fff;box-shadow:0 3px 10px #0000000b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--ink)}
+.home-quick-grid button span{font-size:22px}
+.home-quick-grid button strong{font-size:12px}
+.home-quick-grid button small{font-size:9px;color:var(--muted)}
+.home-resume-heading{margin-top:24px}
+.home-resume-list{display:grid;gap:8px}
+.home-resume-item{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:1px solid #edf0f4;border-radius:15px;background:#fff;padding:11px;box-shadow:0 3px 10px #0000000b;cursor:pointer}
+.home-resume-icon{width:28px;height:28px;border-radius:9px;background:#e5f7ec;color:#1a9c47;display:flex;align-items:center;justify-content:center}
+.home-resume-copy{display:flex;flex-direction:column;gap:3px;flex:1}
+.home-resume-copy strong{font-size:12px}
+.home-resume-copy small{font-size:10px;color:var(--muted)}
+.home-resume-arrow{font-size:22px;color:#9aa3ad}
+.home-empty{padding:18px;text-align:center;border:1px dashed #c8cdd4;border-radius:15px;color:var(--muted);font-size:12px}
+.profile-card{max-width:640px;margin:0 auto}
+.profile-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.profile-heading h2{margin:0 0 4px}
+.profile-upload{margin-bottom:16px}
+.profile-form{margin-top:6px}
 .minutes-prototype-card{border:2px dashed #9b9b9b}
 .minutes-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .minutes-heading h2{margin:0 0 3px}
@@ -120,6 +148,9 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
     .topbar{align-items:flex-start;flex-wrap:wrap}
     .topbar-actions{flex:1 1 auto;justify-content:flex-end;flex-wrap:wrap}
     .stats-grid{grid-template-columns:repeat(4,1fr)}
+    .home-welcome h1{font-size:23px}
+    .home-quick-grid{gap:7px}
+    .home-quick-grid button{min-height:82px}
     .canvas-row{grid-template-columns:1fr}
     .control-grid button{font-size:12px}
     .nav{gap:4px;padding:6px}

@@ -59,6 +59,15 @@ CREATE TABLE IF NOT EXISTS locations(
     name TEXT NOT NULL UNIQUE
 );
 
+CREATE TABLE IF NOT EXISTS users(
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    display_name TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    photo_data TEXT NOT NULL DEFAULT '',
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS games(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     season_id INTEGER NOT NULL,
@@ -134,6 +143,13 @@ def init_db():
 
 
 init_db()
+
+
+class UserIn(BaseModel):
+    display_name: str = ''
+    email: str = ''
+    phone: str = ''
+    photo_data: str = ''
 
 
 class SeasonIn(BaseModel):
@@ -301,6 +317,39 @@ def delete_season(sid: int):
     except sqlite3.IntegrityError:
         raise HTTPException(409, 'Season has games and cannot be deleted')
     return {'ok': True}
+
+
+# ---------------- User profile ----------------
+
+@app.get('/api/user')
+def user_profile():
+    profile = row('SELECT * FROM users WHERE id=1')
+    return profile or {
+        'id': 1,
+        'display_name': '',
+        'email': '',
+        'phone': '',
+        'photo_data': ''
+    }
+
+
+@app.put('/api/user')
+def update_user_profile(user: UserIn):
+    with conn() as c:
+        c.execute(
+            '''
+            INSERT INTO users(id,display_name,email,phone,photo_data,updated_at)
+            VALUES(1,?,?,?,?,CURRENT_TIMESTAMP)
+            ON CONFLICT(id) DO UPDATE SET
+                display_name=excluded.display_name,
+                email=excluded.email,
+                phone=excluded.phone,
+                photo_data=excluded.photo_data,
+                updated_at=CURRENT_TIMESTAMP
+            ''',
+            (user.display_name.strip(), user.email.strip(), user.phone.strip(), user.photo_data)
+        )
+    return row('SELECT * FROM users WHERE id=1')
 
 
 # ---------------- Players ----------------
@@ -1136,13 +1185,15 @@ def main():
             self.main_window.content.on_navigation_starting = self.handle_navigation
 
             screen_commands = [
-                ('Live', 'live', 10),
-                ('Players', 'players', 20),
-                ('Seasons', 'seasons', 30),
-                ('Opponents/Locations', 'reference', 40),
-                ('Games', 'gameManagement', 50),
-                ('Stats', 'stats', 60),
-                ('Reports', 'reports', 70),
+                ('Home', 'home', 10),
+                ('Profile', 'profile', 20),
+                ('Live', 'live', 30),
+                ('Players', 'players', 40),
+                ('Seasons', 'seasons', 50),
+                ('Opponents/Locations', 'reference', 60),
+                ('Games', 'gameManagement', 70),
+                ('Stats', 'stats', 80),
+                ('Reports', 'reports', 90),
             ]
             data_group = Group(
                 'Settings & Data',

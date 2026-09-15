@@ -4,6 +4,7 @@ const S = {
     games: [],
     opponents: [],
     locations: [],
+    user: { display_name: '', email: '', phone: '', photo_data: '' },
     game: null,
     playerId: null,
     pending: null,
@@ -191,10 +192,11 @@ async function init() {
         }
     }
 
-    [S.players, S.seasons, S.games] = await Promise.all([
+    [S.players, S.seasons, S.games, S.user] = await Promise.all([
         api('/api/players'),
         api('/api/seasons'),
-        api('/api/games')
+        api('/api/games'),
+        api('/api/user')
     ]);
 
     [S.opponents, S.locations] = await Promise.all([
@@ -206,6 +208,8 @@ async function init() {
     setupCourt();
     setupShotTypeLabel();
     drawCourt();
+    renderHome();
+    renderProfile();
 
     $('opponent')?.addEventListener('change', async () => {
         await handleAddNewChoice($('opponent'), '/api/opponents', 'opponents', 'opponent');
@@ -274,6 +278,8 @@ function renderAll() {
     renderReports();
     renderGameManagement();
     renderReferenceScreen();
+    renderHome();
+    renderProfile();
 
     const active = S.players.filter(p => p.is_active);
 
@@ -290,6 +296,69 @@ function renderAll() {
     $('gameSeason').innerHTML = S.seasons
         .filter(s => s.is_active)
         .map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+}
+
+function renderHome() {
+    const name = S.user.display_name || 'Coach';
+    const activeGames = S.games.filter(game => game.status !== 'final' && game.status !== 'cancelled');
+    const profilePhoto = S.user.photo_data
+        ? `<img src="${S.user.photo_data}" alt="Profile photo">`
+        : '<span>🏀</span>';
+
+    $('homeGreeting').textContent = `Hello, ${name}`;
+    $('homeProfilePhoto').innerHTML = profilePhoto;
+    $('homeActiveGames').innerHTML = activeGames.length
+        ? activeGames.map(game => `
+            <button class="home-resume-item" onclick="openManagedGame(${game.id})">
+                <span class="home-resume-icon">${game.status === 'live' ? '▶' : '◷'}</span>
+                <span class="home-resume-copy">
+                    <strong>vs ${escapeHtml(game.opponent)}</strong>
+                    <small>${escapeHtml(game.game_date)} · ${escapeHtml(game.season_name)}</small>
+                </span>
+                <span class="home-resume-arrow">›</span>
+            </button>
+        `).join('')
+        : '<div class="home-empty">No active games yet. Start a new game to begin tracking.</div>';
+}
+
+function renderProfile() {
+    if (!$('profileName')) return;
+    $('profileName').value = S.user.display_name || '';
+    $('profileEmail').value = S.user.email || '';
+    $('profilePhone').value = S.user.phone || '';
+    $('profilePhotoPreview').innerHTML = S.user.photo_data
+        ? `<img src="${S.user.photo_data}" alt="Profile photo">`
+        : '<span>🏀</span>';
+}
+
+function handleProfilePhoto(input) {
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        S.user.photo_data = reader.result;
+        renderProfile();
+    };
+    reader.readAsDataURL(file);
+}
+
+async function saveProfile() {
+    try {
+        S.user = await api('/api/user', {
+            method: 'PUT',
+            body: JSON.stringify({
+                display_name: $('profileName').value,
+                email: $('profileEmail').value,
+                phone: $('profilePhone').value,
+                photo_data: S.user.photo_data || ''
+            })
+        });
+        renderHome();
+        renderProfile();
+        toast('Profile saved');
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 /* ---------------- Players ---------------- */
