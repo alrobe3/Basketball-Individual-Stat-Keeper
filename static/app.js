@@ -153,9 +153,9 @@ function numOrNull(v) {
 }
 
 function switchToScreen(screenName) {
-    const activeNavButton = document.querySelector(`.nav button[data-screen="${screenName}"]`);
+    const activeNavButton = document.querySelector(`.home-nav button[data-screen="${screenName}"]`);
     if (activeNavButton) {
-        document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.home-nav button').forEach(b => b.classList.remove('active'));
         activeNavButton.classList.add('active');
     }
 
@@ -176,7 +176,7 @@ function switchToScreen(screenName) {
     }
 }
 
-document.querySelectorAll('.nav button').forEach(button => {
+document.querySelectorAll('.home-nav button').forEach(button => {
     button.onclick = () => {
         switchToScreen(button.dataset.screen);
     };

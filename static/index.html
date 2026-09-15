@@ -400,6 +400,15 @@
 
 </main>
 
+<nav class="home-nav" aria-label="Main navigation">
+    <button class="active" data-screen="home"><span>⌂</span><small>Home</small></button>
+    <button data-screen="gameManagement"><span>▣</span><small>Games</small></button>
+    <button class="home-nav-add" onclick="openGameModal()" aria-label="New Game">+</button>
+    <button data-screen="players"><span>♙</span><small>Players</small></button>
+    <button data-screen="stats"><span>▥</span><small>Stats</small></button>
+    <button data-screen="profile"><span>⚙</span><small>Settings</small></button>
+</nav>
+
 <!-- PLAYER MODAL -->
 <div id="playerModal" class="modal">
     <div class="modal-card">
