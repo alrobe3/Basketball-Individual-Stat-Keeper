@@ -1207,6 +1207,7 @@ def main():
                     Command(
                         lambda widget, screen_id=screen_id: self.open_screen(screen_id, widget),
                         label,
+                        icon=toga.Icon('static/home') if screen_id == 'home' else None,
                         group=Group.COMMANDS,
                         order=order,
                         id=f'screen-{screen_id}'
