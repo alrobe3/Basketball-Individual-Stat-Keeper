@@ -31,6 +31,10 @@ const S = {
 
 const ADD_NEW_VALUE = '__add_new__';
 
+// Set on the initial WebView URL by the Toga Android app (app.py) so the
+// UI can tell it's running inside the packaged app rather than a browser.
+const NATIVE_APP = new URLSearchParams(window.location.search).get('native_shell') === 'android';
+
 const $ = id => document.getElementById(id);
 
 async function api(url, opt = {}) {
@@ -66,6 +70,49 @@ function openModal(id) {
     $(id).classList.add('open');
 }
 
+// The app is packaged as a bare Android WebView (see app.py), which does not
+// implement window.confirm/prompt dialogs. These modal-based helpers replace
+// them so confirmation and text-entry flows work both in the browser and the
+// packaged app.
+let _confirmResolver = null;
+
+function showConfirm(message, { okText = 'Confirm', danger = true } = {}) {
+    return new Promise(resolve => {
+        _confirmResolver = resolve;
+        $('confirmModalMessage').textContent = message;
+        $('confirmModalOk').textContent = okText;
+        $('confirmModalOk').className = danger ? 'btn danger' : 'btn primary';
+        openModal('confirmModal');
+    });
+}
+
+function resolveConfirmModal(result) {
+    closeModal('confirmModal');
+    const resolve = _confirmResolver;
+    _confirmResolver = null;
+    if (resolve) resolve(result);
+}
+
+let _promptResolver = null;
+
+function showPrompt(message, defaultValue = '') {
+    return new Promise(resolve => {
+        _promptResolver = resolve;
+        $('promptModalMessage').textContent = message;
+        $('promptModalInput').value = defaultValue ?? '';
+        openModal('promptModal');
+        setTimeout(() => $('promptModalInput').focus(), 50);
+    });
+}
+
+function resolvePromptModal(confirmed) {
+    const value = confirmed ? $('promptModalInput').value : null;
+    closeModal('promptModal');
+    const resolve = _promptResolver;
+    _promptResolver = null;
+    if (resolve) resolve(value);
+}
+
 async function backupDatabase() {
     try {
         sync('Preparing backup…');
@@ -95,7 +142,10 @@ function selectDatabaseBackup() {
 }
 
 async function restoreDatabase(file) {
-    if (!file || !confirm('Restore this backup? Current data will be replaced.')) {
+    if (!file) {
+        return;
+    }
+    if (!await showConfirm('Restore this backup? Current data will be replaced.')) {
         return;
     }
 
@@ -360,6 +410,24 @@ function handleProfilePhoto(input) {
     reader.readAsDataURL(file);
 }
 
+// The embedded Android WebView doesn't support the standard HTML file
+// picker (no onShowFileChooser implementation), so <input type="file">
+// silently does nothing there even though it works in a normal browser.
+// When running inside the packaged Android app, hand off to the native
+// picker via a navigation the app intercepts (see handle_navigation in
+// app.py); otherwise let the label open the file input as usual.
+function triggerProfilePhotoPicker(event) {
+    if (!NATIVE_APP) return true;
+    event.preventDefault();
+    window.location.href = '/api/profile-photo/pick';
+    return false;
+}
+
+function setProfilePhotoFromNative(dataUrl) {
+    S.user.photo_data = dataUrl;
+    renderProfile();
+}
+
 async function saveProfile() {
     try {
         S.user = await api('/api/user', {
@@ -468,11 +536,16 @@ async function savePlayer() {
 }
 
 async function deletePlayer() {
+    if (!await showConfirm('Delete this player? This action cannot be undone.')) {
+        return;
+    }
+
     try {
         await api(`/api/players/${$('playerId').value}`, { method: 'DELETE' });
         S.players = await api('/api/players');
         closeModal('playerModal');
         renderAll();
+        toast('Player deleted');
     }
     catch (e) {
         toast(e.message);
@@ -539,11 +612,16 @@ async function saveSeason() {
 }
 
 async function deleteSeason() {
+    if (!await showConfirm('Delete this season? This action cannot be undone.')) {
+        return;
+    }
+
     try {
         await api(`/api/seasons/${$('seasonId').value}`, { method: 'DELETE' });
         S.seasons = await api('/api/seasons');
         closeModal('seasonModal');
         renderAll();
+        toast('Season deleted');
     }
     catch (e) {
         toast(e.message);
@@ -635,7 +713,7 @@ async function saveOpponent() {
 async function deleteOpponent() {
     const id = $('opponentId').value;
 
-    if (!confirm('Delete this opponent from the saved list? Existing games will keep their opponent name.')) {
+    if (!await showConfirm('Delete this opponent from the saved list? Existing games will keep their opponent name.')) {
         return;
     }
 
@@ -696,7 +774,7 @@ async function saveLocation() {
 async function deleteLocation() {
     const id = $('locationId').value;
 
-    if (!confirm('Delete this location from the saved list? Existing games will keep their location name.')) {
+    if (!await showConfirm('Delete this location from the saved list? Existing games will keep their location name.')) {
         return;
     }
 
@@ -762,7 +840,7 @@ async function handleAddNewChoice(selectEl, endpoint, listRefName, label) {
         return '';
     }
 
-    const name = prompt(`Enter new ${label} name:`);
+    const name = await showPrompt(`Enter new ${label} name:`);
 
     if (!name || !name.trim()) {
         selectEl.value = '';
@@ -1129,7 +1207,7 @@ async function duplicateGame(gameId) {
     const game = S.games.find(item => item.id === gameId);
     if (!game) return;
 
-    const newDate = prompt(
+    const newDate = await showPrompt(
         `Enter the date for the duplicated game against ${game.opponent}:`,
         game.game_date
     );
@@ -1156,8 +1234,8 @@ async function deleteManagedGame(gameId) {
     const game = S.games.find(item => item.id === gameId);
     if (!game) return;
 
-    const confirmed = confirm(
-        `Permanently delete the game against ${game.opponent} on ${game.game_date}?\n\nThis also deletes its shots and statistics.`
+    const confirmed = await showConfirm(
+        `Permanently delete the game against ${game.opponent} on ${game.game_date}? This also deletes its shots and statistics.`
     );
 
     if (!confirmed) return;
@@ -1724,7 +1802,7 @@ function cancelSelectedShot() {
 }
 
 async function clearChart() {
-    if (!confirm('Clear all shots for this player in this game?')) return;
+    if (!await showConfirm('Clear all shots for this player in this game?')) return;
 
     closeModal('statMenuModal');
     await api(`/api/games/${S.game.id}/shots?player_id=${currentPlayer().id}`, { method: 'DELETE' });

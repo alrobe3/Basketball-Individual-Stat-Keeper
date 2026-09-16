@@ -13,7 +13,7 @@
 <div id="toast" class="toast"></div>
 
 <!-- SETTINGS MODAL -->
-<div id="settingsModal" class="modal">
+<div id="settingsModal" class="modal">f
     <div class="modal-card settings-card">
         <h2>Settings</h2>
         <p class="small">Save a copy of the current database or restore a previous backup.</p>
@@ -50,6 +50,31 @@
         <div class="shot-result-actions">
             <button class="btn danger" onclick="deleteSelectedShot()">Delete</button>
             <button class="btn secondary" onclick="cancelSelectedShot()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- CONFIRM MODAL (replaces window.confirm, which the packaged Android WebView does not support) -->
+<div id="confirmModal" class="modal">
+    <div class="modal-card">
+        <h2 id="confirmModalTitle">Confirm</h2>
+        <p class="small" id="confirmModalMessage"></p>
+        <div class="actions">
+            <button class="btn danger" id="confirmModalOk" onclick="resolveConfirmModal(true)">Confirm</button>
+            <button class="btn secondary" onclick="resolveConfirmModal(false)">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- PROMPT MODAL (replaces window.prompt, which the packaged Android WebView does not support) -->
+<div id="promptModal" class="modal">
+    <div class="modal-card">
+        <h2 id="promptModalTitle">Input needed</h2>
+        <p class="small" id="promptModalMessage"></p>
+        <input id="promptModalInput" type="text">
+        <div class="actions">
+            <button class="btn primary" onclick="resolvePromptModal(true)">OK</button>
+            <button class="btn secondary" onclick="resolvePromptModal(false)">Cancel</button>
         </div>
     </div>
 </div>
@@ -139,9 +164,9 @@
             </div>
             <div id="profilePhotoPreview" class="profile-photo-preview"><span>🏀</span></div>
         </div>
-        <label class="profile-upload btn secondary">
+        <label class="profile-upload btn secondary" onclick="return triggerProfilePhotoPicker(event)">
             Upload Picture
-            <input type="file" accept="image/*" onchange="handleProfilePhoto(this)" hidden>
+            <input type="file" id="profilePhotoInput" accept="image/*" onchange="handleProfilePhoto(this)" hidden>
         </label>
         <div class="form-grid profile-form">
             <div><label for="profileName">Name</label><input id="profileName" placeholder="Coach name"></div>
@@ -376,6 +401,7 @@
             <label>Season</label>
             <select id="statsSeason" onchange="loadPlayerStats()"></select>
         </div>
+        <button class="btn secondary" onclick="switchToScreen('reports')">Reports</button>
     </div>
     <div id="statsContent"></div>
 </section>

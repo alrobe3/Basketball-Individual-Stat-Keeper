@@ -7,6 +7,7 @@ from pathlib import Path
 import sqlite3, io
 import base64
 import json
+import mimetypes
 import os
 import sys
 import tempfile
@@ -425,23 +426,31 @@ def add_season(x: SeasonIn):
                 'INSERT INTO seasons(name,start_date,end_date,is_active) VALUES(?,?,?,?)',
                 (x.name, x.start_date, x.end_date, int(x.is_active))
             )
-            return row('SELECT * FROM seasons WHERE id=?', (cur.lastrowid,))
+            sid = cur.lastrowid
     except sqlite3.IntegrityError:
         raise HTTPException(400, 'Season name already exists')
+    return row('SELECT * FROM seasons WHERE id=?', (sid,))
 
 
 @app.put('/api/seasons/{sid}')
 def edit_season(sid: int, x: SeasonIn):
-    with conn() as c:
-        c.execute(
-            'UPDATE seasons SET name=?,start_date=?,end_date=?,is_active=? WHERE id=?',
-            (x.name, x.start_date, x.end_date, int(x.is_active), sid)
-        )
+    if not row('SELECT id FROM seasons WHERE id=?', (sid,)):
+        raise HTTPException(404, 'Season not found')
+    try:
+        with conn() as c:
+            c.execute(
+                'UPDATE seasons SET name=?,start_date=?,end_date=?,is_active=? WHERE id=?',
+                (x.name, x.start_date, x.end_date, int(x.is_active), sid)
+            )
+    except sqlite3.IntegrityError:
+        raise HTTPException(400, 'Season name already exists')
     return row('SELECT * FROM seasons WHERE id=?', (sid,))
 
 
 @app.delete('/api/seasons/{sid}')
 def delete_season(sid: int):
+    if not row('SELECT id FROM seasons WHERE id=?', (sid,)):
+        raise HTTPException(404, 'Season not found')
     try:
         with conn() as c:
             c.execute('DELETE FROM seasons WHERE id=?', (sid,))
@@ -503,6 +512,8 @@ def add_player(x: PlayerIn):
 
 @app.put('/api/players/{pid}')
 def edit_player(pid: int, x: PlayerIn):
+    if not row('SELECT id FROM players WHERE id=?', (pid,)):
+        raise HTTPException(404, 'Player not found')
     with conn() as c:
         c.execute(
             'UPDATE players SET first_name=?,last_name=?,jersey_number=?,position=?,height=?,weight=?,graduation_year=?,is_active=? WHERE id=?',
@@ -513,6 +524,8 @@ def edit_player(pid: int, x: PlayerIn):
 
 @app.delete('/api/players/{pid}')
 def delete_player(pid: int):
+    if not row('SELECT id FROM players WHERE id=?', (pid,)):
+        raise HTTPException(404, 'Player not found')
     try:
         with conn() as c:
             c.execute('DELETE FROM players WHERE id=?', (pid,))
@@ -569,6 +582,8 @@ def edit_opponent(oid: int, x: NameIn):
 
 @app.delete('/api/opponents/{oid}')
 def delete_opponent(oid: int):
+    if not row('SELECT id FROM opponents WHERE id=?', (oid,)):
+        raise HTTPException(404, 'Opponent not found')
     with conn() as c:
         c.execute('DELETE FROM opponents WHERE id=?', (oid,))
     return {'ok': True}
@@ -621,6 +636,8 @@ def edit_location(lid: int, x: NameIn):
 
 @app.delete('/api/locations/{lid}')
 def delete_location(lid: int):
+    if not row('SELECT id FROM locations WHERE id=?', (lid,)):
+        raise HTTPException(404, 'Location not found')
     with conn() as c:
         c.execute('DELETE FROM locations WHERE id=?', (lid,))
     return {'ok': True}
@@ -1363,6 +1380,11 @@ def open_share_image():
     return Response(status_code=204)
 
 
+@app.get('/api/profile-photo/pick')
+def open_profile_photo_picker():
+    return Response(status_code=204)
+
+
 def main():
     import toga
     import uvicorn
@@ -1402,7 +1424,7 @@ def main():
                     ColorDrawable(Color.parseColor('#161616'))
                 )
             self.main_window.content = toga.WebView(
-                url=f'http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}'
+                url=f'http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}/?native_shell=android'
             )
             self.main_window.content.on_navigation_starting = self.handle_navigation
 
@@ -1471,6 +1493,11 @@ def main():
 
         def handle_navigation(self, widget, url):
             parsed_url = urllib.parse.urlparse(url)
+
+            if parsed_url.path == '/api/profile-photo/pick':
+                self.pick_profile_photo()
+                return False
+
             if parsed_url.path != '/api/share-image/open':
                 return True
 
@@ -1510,6 +1537,66 @@ def main():
                 message = json.dumps(f'Share failed: {error}')
                 self.main_window.content.evaluate_javascript(f'toast({message})')
             return False
+
+        def pick_profile_photo(self):
+            """Launch Android's native image picker.
+
+            The embedded Android WebView doesn't implement onShowFileChooser,
+            so the HTML <input type="file"> picker used by the web build can't
+            open here. Instead, the profile page navigates to a sentinel URL
+            that we intercept in handle_navigation, and we open a native
+            picker via an Android Intent.
+            """
+            try:
+                from android.content import Intent
+
+                intent = Intent(Intent.ACTION_GET_CONTENT)
+                intent.setType('image/*')
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                self._impl.start_activity(intent, on_complete=self.profile_photo_picked)
+            except Exception as error:
+                message = json.dumps(f'Could not open photo picker: {error}')
+                self.main_window.content.evaluate_javascript(f'toast({message})')
+
+        def profile_photo_picked(self, result_code, data):
+            try:
+                from android.app import Activity
+
+                if result_code != Activity.RESULT_OK or data is None:
+                    return
+
+                image_uri = data.getData()
+                if image_uri is None:
+                    return
+
+                from java.io import ByteArrayOutputStream
+
+                context = self._impl.native.getApplicationContext()
+                resolver = context.getContentResolver()
+                mime_type = (
+                    resolver.getType(image_uri)
+                    or mimetypes.guess_type(str(image_uri))[0]
+                    or 'image/jpeg'
+                )
+
+                input_stream = resolver.openInputStream(image_uri)
+                output_stream = ByteArrayOutputStream()
+                chunk = bytearray(8192)
+                bytes_read = input_stream.read(chunk)
+                while bytes_read != -1:
+                    output_stream.write(chunk, 0, bytes_read)
+                    bytes_read = input_stream.read(chunk)
+                input_stream.close()
+
+                encoded = base64.b64encode(bytes(output_stream.toByteArray())).decode('ascii')
+                data_url = f'data:{mime_type};base64,{encoded}'
+                message = json.dumps(data_url)
+                self.main_window.content.evaluate_javascript(
+                    f'setProfilePhotoFromNative({message})'
+                )
+            except Exception as error:
+                message = json.dumps(f'Could not load the selected photo: {error}')
+                self.main_window.content.evaluate_javascript(f'toast({message})')
 
         def open_settings(self, widget):
             self.main_window.content.evaluate_javascript(
