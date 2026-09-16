@@ -23,7 +23,9 @@ const S = {
         elapsed: 0,
         lastTick: null,
         timer: null,
-        players: {}
+        players: {},
+        periodType: 'quarter',
+        periodNumber: 1
     }
 };
 
@@ -176,6 +178,10 @@ function switchToScreen(screenName) {
     }
 }
 
+function minutesUrl(gameId = S.game?.id) {
+    return `/api/games/${gameId}/minutes?period_type=${S.minutes.periodType}&period_number=${S.minutes.periodNumber}`;
+}
+
 document.querySelectorAll('.home-nav button').forEach(button => {
     button.onclick = () => {
         switchToScreen(button.dataset.screen);
@@ -210,6 +216,18 @@ async function init() {
     drawCourt();
     renderHome();
     renderProfile();
+
+    $('minutesPeriodType')?.addEventListener('change', async event => {
+        S.minutes.periodType = event.target.value;
+        S.minutes.periodNumber = 1;
+        updateMinutesPeriodOptions();
+        await loadMinutes();
+    });
+
+    $('minutesPeriodNumber')?.addEventListener('change', async event => {
+        S.minutes.periodNumber = +event.target.value;
+        await loadMinutes();
+    });
 
     $('opponent')?.addEventListener('change', async () => {
         await handleAddNewChoice($('opponent'), '/api/opponents', 'opponents', 'opponent');
@@ -1259,6 +1277,7 @@ async function loadGame(id, silent = false) {
     }
 
     const oldPid = +$('livePlayer').value;
+    const gameChanged = S.game?.id !== +id;
     S.game = await api(`/api/games/${id}`);
 
     $('liveEmpty').style.display = 'none';
@@ -1274,6 +1293,9 @@ async function loadGame(id, silent = false) {
     S.playerId = +$('livePlayer').value;
 
     $('livePlayer').onchange = handleLivePlayerChange;
+    if (gameChanged || !S.minutes.players) {
+        await loadMinutes();
+    }
     renderLive();
 
     if (!silent) {
@@ -1329,11 +1351,44 @@ function formatMinutesClock(seconds) {
     return `${String(Math.floor(wholeSeconds / 60)).padStart(2, '0')}:${String(wholeSeconds % 60).padStart(2, '0')}`;
 }
 
+function updateMinutesPeriodOptions() {
+    const numberSelect = $('minutesPeriodNumber');
+    if (!numberSelect) return;
+    const count = S.minutes.periodType === 'quarter' ? 4 : 2;
+    numberSelect.innerHTML = Array.from({ length: count }, (_, index) =>
+        `<option value="${index + 1}">${S.minutes.periodType === 'quarter' ? 'Quarter' : 'Half'} ${index + 1}</option>`
+    ).join('');
+    numberSelect.value = String(S.minutes.periodNumber);
+}
+
+async function loadMinutes() {
+    if (!S.game) return;
+    clearInterval(S.minutes.timer);
+    S.minutes.timer = null;
+    const data = await api(minutesUrl());
+    S.minutes.periodType = data.period_type;
+    S.minutes.periodNumber = data.period_number;
+    S.minutes.elapsed = data.period.elapsed_seconds;
+    S.minutes.running = data.period.is_running;
+    S.minutes.lastTick = S.minutes.running ? Date.now() : null;
+    S.minutes.players = Object.fromEntries(data.players.map(player => [player.id, {
+        onCourt: player.on_court,
+        seconds: player.seconds,
+        enteredAt: player.on_court ? data.period.elapsed_seconds - player.seconds : null
+    }]));
+    $('minutesPeriodType').value = S.minutes.periodType;
+    updateMinutesPeriodOptions();
+    if (S.minutes.running) {
+        S.minutes.timer = setInterval(tickMinutesPrototype, 250);
+    }
+    renderMinutesPrototype();
+}
+
 function renderMinutesPrototype() {
     if (!S.game || !$('minutesPlayerList')) return;
 
     $('minutesClock').textContent = formatMinutesClock(S.minutes.elapsed);
-    $('minutesClockButton').textContent = S.minutes.running ? 'Pause Clock' : 'Start Clock';
+    $('minutesClockButton').textContent = S.minutes.running ? 'Pause Period' : 'Start Period';
 
     $('minutesPlayerList').innerHTML = S.game.players.map(player => {
         const state = S.minutes.players[player.id] || { onCourt: false, seconds: 0, enteredAt: null };
@@ -1356,19 +1411,21 @@ function renderMinutesPrototype() {
     }).join('');
 }
 
-function toggleMinutesClock() {
-    if (S.minutes.running) {
-        tickMinutesPrototype();
-        S.minutes.running = false;
-        S.minutes.lastTick = null;
-        clearInterval(S.minutes.timer);
-        S.minutes.timer = null;
-    } else {
-        S.minutes.running = true;
-        S.minutes.lastTick = Date.now();
-        S.minutes.timer = setInterval(tickMinutesPrototype, 250);
+async function toggleMinutesClock() {
+    try {
+        const action = S.minutes.running ? 'pause' : 'start';
+        const data = await api(`/api/games/${S.game.id}/minutes/period`, {
+            method: 'POST',
+            body: JSON.stringify({
+                period_type: S.minutes.periodType,
+                period_number: S.minutes.periodNumber,
+                action
+            })
+        });
+        applyMinutesData(data);
+    } catch (error) {
+        toast(error.message);
     }
-    renderMinutesPrototype();
 }
 
 function tickMinutesPrototype() {
@@ -1379,28 +1436,52 @@ function tickMinutesPrototype() {
     renderMinutesPrototype();
 }
 
-function togglePlayerCourt(playerId) {
-    const player = S.minutes.players[playerId] || { onCourt: false, seconds: 0, enteredAt: null };
-    tickMinutesPrototype();
-    if (player.onCourt) {
-        player.seconds += S.minutes.elapsed - player.enteredAt;
-        player.onCourt = false;
-        player.enteredAt = null;
-    } else {
-        player.onCourt = true;
-        player.enteredAt = S.minutes.elapsed;
+async function togglePlayerCourt(playerId) {
+    try {
+        const data = await api(`/api/games/${S.game.id}/minutes/player?period_type=${S.minutes.periodType}&period_number=${S.minutes.periodNumber}`, {
+            method: 'POST',
+            body: JSON.stringify({ player_id: playerId })
+        });
+        applyMinutesData(data);
+    } catch (error) {
+        toast(error.message);
     }
-    S.minutes.players[playerId] = player;
-    renderMinutesPrototype();
 }
 
-function resetMinutesPrototype() {
+async function resetMinutesPrototype() {
+    try {
+        const data = await api(`/api/games/${S.game.id}/minutes/period`, {
+            method: 'POST',
+            body: JSON.stringify({
+                period_type: S.minutes.periodType,
+                period_number: S.minutes.periodNumber,
+                action: 'reset'
+            })
+        });
+        applyMinutesData(data);
+    } catch (error) {
+        toast(error.message);
+    }
+}
+
+function applyMinutesData(data) {
     clearInterval(S.minutes.timer);
-    S.minutes.running = false;
-    S.minutes.elapsed = 0;
-    S.minutes.lastTick = null;
     S.minutes.timer = null;
-    S.minutes.players = {};
+    S.minutes.periodType = data.period_type;
+    S.minutes.periodNumber = data.period_number;
+    S.minutes.elapsed = data.period.elapsed_seconds;
+    S.minutes.running = data.period.is_running;
+    S.minutes.lastTick = S.minutes.running ? Date.now() : null;
+    S.minutes.players = Object.fromEntries(data.players.map(player => [player.id, {
+        onCourt: player.on_court,
+        seconds: player.seconds,
+        enteredAt: player.on_court ? data.period.elapsed_seconds - player.seconds : null
+    }]));
+    $('minutesPeriodType').value = S.minutes.periodType;
+    updateMinutesPeriodOptions();
+    if (S.minutes.running) {
+        S.minutes.timer = setInterval(tickMinutesPrototype, 250);
+    }
     renderMinutesPrototype();
 }
 

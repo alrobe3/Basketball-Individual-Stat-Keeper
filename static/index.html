@@ -230,14 +230,23 @@
         <div class="card minutes-prototype-card">
             <div class="minutes-heading">
                 <div>
-                    <h2>Minutes Prototype</h2>
-                    <div class="small">Mock on-court tracking for testing</div>
+                    <h2>Minutes</h2>
+                    <div class="small">Track playing time by period</div>
                 </div>
                 <div id="minutesClock" class="minutes-clock">00:00</div>
             </div>
+            <div class="minutes-period-controls">
+                <label for="minutesPeriodType">Game format</label>
+                <select id="minutesPeriodType">
+                    <option value="quarter">Quarters</option>
+                    <option value="half">Halves</option>
+                </select>
+                <label for="minutesPeriodNumber">Current period</label>
+                <select id="minutesPeriodNumber"></select>
+            </div>
             <div class="minutes-controls">
-                <button id="minutesClockButton" class="btn primary" onclick="toggleMinutesClock()">Start Clock</button>
-                <button class="btn secondary" onclick="resetMinutesPrototype()">Reset</button>
+                <button id="minutesClockButton" class="btn primary" onclick="toggleMinutesClock()">Start Period</button>
+                <button class="btn secondary" onclick="resetMinutesPrototype()">Reset Period</button>
             </div>
             <div id="minutesPlayerList" class="minutes-player-list"></div>
         </div>
@@ -401,10 +410,9 @@
 </main>
 
 <nav class="home-nav" aria-label="Main navigation">
-    <button class="active" data-screen="home"><span>⌂</span><small>Home</small></button>
-    <button data-screen="gameManagement"><span>▣</span><small>Games</small></button>
-    <button class="home-nav-add" onclick="openGameModal()" aria-label="New Game">+</button>
     <button data-screen="players"><span>♙</span><small>Players</small></button>
+    <button data-screen="gameManagement"><span>▣</span><small>Games</small></button>
+    <button class="home-nav-add" data-screen="home" aria-label="Home"><span>⌂</span></button>
     <button data-screen="stats"><span>▥</span><small>Stats</small></button>
     <button data-screen="profile"><span>⚙</span><small>Settings</small></button>
 </nav>
@@ -577,6 +585,6 @@
     </div>
 </div>
 
-<script src="/static/app.js?v=20260906-4"></script>
+<script src="/static/app.js?v=20260915-1"></script>
 </body>
 </html>

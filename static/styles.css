@@ -112,6 +112,9 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
 .minutes-heading h2{margin:0 0 3px}
 .minutes-clock{font-variant-numeric:tabular-nums;font-size:26px;font-weight:800;color:#161616}
 .minutes-controls{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.minutes-period-controls{display:grid;grid-template-columns:auto minmax(130px,1fr) auto minmax(130px,1fr);align-items:center;gap:8px;margin-top:14px}
+.minutes-period-controls label{font-size:11px;white-space:nowrap}
+.minutes-period-controls select{padding:9px 10px}
 .minutes-player-list{display:grid;gap:8px}
 .minutes-player-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;background:#f3f3f3;border-radius:14px}
 .minutes-status{border:0;border-radius:18px;padding:9px 12px;background:#ddd;color:#333;font-weight:700;cursor:pointer}
@@ -168,6 +171,8 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
     .floating-game-toolbar{bottom:calc(8px + env(safe-area-inset-bottom));width:calc(100% - 16px)}
     .floating-game-action{font-size:11px;padding:9px 3px;gap:3px}
     .minutes-heading{align-items:flex-start;flex-direction:column}
+    .minutes-period-controls{grid-template-columns:1fr 1fr}
+    .minutes-period-controls label{font-size:10px}
     .game-management-heading{display:block}
     .game-management-score{display:inline-block;margin-top:10px}
     .game-management-actions .btn{flex:1 1 calc(50% - 8px)}
@@ -206,7 +211,8 @@ body{font-family:Inter,Segoe UI,Arial,sans-serif;background:#f7f9fc;color:#11182
 .home-nav{position:fixed;left:0;bottom:0;width:100%;height:62px;display:flex;align-items:center;justify-content:space-around;padding:5px 6px calc(5px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #edf0f5;z-index:30}
 .home-nav button{width:52px;height:46px;border:0;background:transparent;color:#7c86a1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:17px;cursor:pointer}
 .home-nav button small{font-size:7px;color:inherit}.home-nav button.active{color:#2468ef}
-.home-nav-add{width:38px!important;height:38px!important;border-radius:50%!important;background:#2468ef!important;color:#fff!important;font-size:25px!important;box-shadow:0 5px 12px #2468ef55}
+.home-nav-add{width:38px!important;height:38px!important;padding:0;display:flex!important;align-items:center;justify-content:center;border-radius:50%!important;background:#2468ef!important;color:#fff!important;font-size:25px!important;line-height:1;box-shadow:0 5px 12px #2468ef55}
+.home-nav-add span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;line-height:1;transform:translateY(-1px)}
 .home-nav-add:hover{background:#1958d0!important}
 .card{border-radius:15px;box-shadow:0 3px 12px #1e293b0b;padding:14px}
 .profile-card{box-shadow:none;padding:0}

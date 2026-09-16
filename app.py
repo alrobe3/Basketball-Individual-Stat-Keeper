@@ -15,7 +15,7 @@ import time
 import urllib.parse
 import uuid
 import webbrowser
-from datetime import date
+from datetime import date, datetime, timezone
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as pdfcanvas
 from reportlab.lib.colors import HexColor
@@ -111,6 +111,30 @@ CREATE TABLE IF NOT EXISTS stat_events(
     value INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(game_id) REFERENCES games(id) ON DELETE CASCADE,
+    FOREIGN KEY(player_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS game_periods(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id INTEGER NOT NULL,
+    period_type TEXT NOT NULL CHECK(period_type IN ('quarter','half')),
+    period_number INTEGER NOT NULL,
+    elapsed_seconds REAL NOT NULL DEFAULT 0,
+    is_running INTEGER NOT NULL DEFAULT 0,
+    started_at TEXT,
+    UNIQUE(game_id, period_type, period_number),
+    FOREIGN KEY(game_id) REFERENCES games(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS minute_entries(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id INTEGER NOT NULL,
+    period_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
+    started_at TEXT NOT NULL,
+    ended_at TEXT,
+    FOREIGN KEY(game_id) REFERENCES games(id) ON DELETE CASCADE,
+    FOREIGN KEY(period_id) REFERENCES game_periods(id) ON DELETE CASCADE,
     FOREIGN KEY(player_id) REFERENCES players(id)
 );
 '''
@@ -225,6 +249,16 @@ class EventIn(BaseModel):
     value: int = 1
 
 
+class MinutesPeriodIn(BaseModel):
+    period_type: str
+    period_number: int
+    action: str
+
+
+class MinutesPlayerIn(BaseModel):
+    player_id: int
+
+
 def rows(q, p=()):
     with conn() as c:
         return [dict(x) for x in c.execute(q, p).fetchall()]
@@ -234,6 +268,103 @@ def row(q, p=()):
     with conn() as c:
         x = c.execute(q, p).fetchone()
         return dict(x) if x else None
+
+
+def utc_now():
+    return datetime.now(timezone.utc)
+
+
+def parse_utc(value):
+    return datetime.fromisoformat(value).astimezone(timezone.utc)
+
+
+def period_elapsed(period, now=None):
+    elapsed = float(period['elapsed_seconds'])
+    if period['is_running'] and period['started_at']:
+        current = now or utc_now()
+        elapsed += max(0, (current - parse_utc(period['started_at'])).total_seconds())
+    return elapsed
+
+
+def close_period(c, period, now):
+    if not period or not period['is_running']:
+        return period
+    elapsed = period_elapsed(period, now)
+    c.execute(
+        'UPDATE game_periods SET elapsed_seconds=?,is_running=0,started_at=NULL WHERE id=?',
+        (elapsed, period['id'])
+    )
+    c.execute(
+        'UPDATE minute_entries SET ended_at=? WHERE period_id=? AND ended_at IS NULL',
+        (now.isoformat(), period['id'])
+    )
+    return dict(c.execute('SELECT * FROM game_periods WHERE id=?', (period['id'],)).fetchone())
+
+
+def minutes_payload(gid, period_type, period_number):
+    game = row('SELECT id FROM games WHERE id=?', (gid,))
+    if not game:
+        raise HTTPException(404, 'Game not found')
+
+    period = row(
+        'SELECT * FROM game_periods WHERE game_id=? AND period_type=? AND period_number=?',
+        (gid, period_type, period_number)
+    )
+    periods = rows(
+        'SELECT * FROM game_periods WHERE game_id=? ORDER BY period_type,period_number',
+        (gid,)
+    )
+    now = utc_now()
+    players = rows(
+        'SELECT p.id,p.first_name,p.last_name,p.jersey_number FROM players p '
+        'JOIN game_players gp ON gp.player_id=p.id WHERE gp.game_id=? ORDER BY p.jersey_number',
+        (gid,)
+    )
+    for player in players:
+        entries = rows(
+            'SELECT started_at,ended_at FROM minute_entries WHERE game_id=? AND period_id=? AND player_id=?',
+            (gid, period['id'] if period else -1, player['id'])
+        )
+        player['seconds'] = sum(
+            max(0, ((parse_utc(entry['ended_at']) if entry['ended_at'] else now) - parse_utc(entry['started_at'])).total_seconds())
+            for entry in entries
+        )
+        player['on_court'] = bool(entries and entries[-1]['ended_at'] is None)
+
+    return {
+        'period_type': period_type,
+        'period_number': period_number,
+        'period': {
+            'elapsed_seconds': period_elapsed(period, now) if period else 0,
+            'is_running': bool(period and period['is_running'])
+        },
+        'periods': periods,
+        'players': players
+    }
+
+
+def player_minutes_totals(game_ids):
+    if not game_ids:
+        return {}
+
+    placeholders = ','.join('?' * len(game_ids))
+    entries = rows(
+        f'SELECT player_id,started_at,ended_at FROM minute_entries '
+        f'WHERE game_id IN ({placeholders})',
+        game_ids
+    )
+    now = utc_now()
+    totals = {}
+    for entry in entries:
+        ended_at = parse_utc(entry['ended_at']) if entry['ended_at'] else now
+        seconds = max(0, (ended_at - parse_utc(entry['started_at'])).total_seconds())
+        totals[entry['player_id']] = totals.get(entry['player_id'], 0) + seconds
+    return totals
+
+
+def format_report_minutes(seconds):
+    total_seconds = max(0, int(seconds))
+    return f'{total_seconds // 60}:{total_seconds % 60:02d}'
 
 
 def event_totals(player_id, game_id=None):
@@ -650,6 +781,89 @@ def add_game_player(gid: int, data: GamePlayerIn):
     return {'ok': True, 'game_id': gid, 'player_id': data.player_id}
 
 
+# ---------------- Minutes ----------------
+
+@app.get('/api/games/{gid}/minutes')
+def get_minutes(gid: int, period_type: str = 'quarter', period_number: int = 1):
+    return minutes_payload(gid, period_type, period_number)
+
+
+@app.post('/api/games/{gid}/minutes/period')
+def update_minutes_period(gid: int, data: MinutesPeriodIn):
+    if data.period_type not in {'quarter', 'half'}:
+        raise HTTPException(400, 'Period type must be quarter or half')
+    max_period = 4 if data.period_type == 'quarter' else 2
+    if data.period_number < 1 or data.period_number > max_period:
+        raise HTTPException(400, 'Invalid period number')
+    if data.action not in {'start', 'pause', 'reset'}:
+        raise HTTPException(400, 'Invalid period action')
+    if not row('SELECT id FROM games WHERE id=?', (gid,)):
+        raise HTTPException(404, 'Game not found')
+
+    now = utc_now()
+    with conn() as c:
+        period = c.execute(
+            'SELECT * FROM game_periods WHERE game_id=? AND period_type=? AND period_number=?',
+            (gid, data.period_type, data.period_number)
+        ).fetchone()
+
+        if data.action == 'reset':
+            if period:
+                close_period(c, period, now)
+                c.execute('DELETE FROM minute_entries WHERE period_id=?', (period['id'],))
+                c.execute(
+                    'UPDATE game_periods SET elapsed_seconds=0,is_running=0,started_at=NULL WHERE id=?',
+                    (period['id'],)
+                )
+        else:
+            if not period:
+                cursor = c.execute(
+                    'INSERT INTO game_periods(game_id,period_type,period_number) VALUES(?,?,?)',
+                    (gid, data.period_type, data.period_number)
+                )
+                period = c.execute('SELECT * FROM game_periods WHERE id=?', (cursor.lastrowid,)).fetchone()
+
+            if data.action == 'start' and not period['is_running']:
+                for active in c.execute('SELECT * FROM game_periods WHERE game_id=? AND is_running=1', (gid,)).fetchall():
+                    close_period(c, active, now)
+                c.execute(
+                    'UPDATE game_periods SET is_running=1,started_at=? WHERE id=?',
+                    (now.isoformat(), period['id'])
+                )
+            elif data.action == 'pause':
+                close_period(c, period, now)
+
+    return minutes_payload(gid, data.period_type, data.period_number)
+
+
+@app.post('/api/games/{gid}/minutes/player')
+def toggle_minutes_player(gid: int, data: MinutesPlayerIn, period_type: str = 'quarter', period_number: int = 1):
+    period = row(
+        'SELECT * FROM game_periods WHERE game_id=? AND period_type=? AND period_number=?',
+        (gid, period_type, period_number)
+    )
+    if not period or not period['is_running']:
+        raise HTTPException(400, 'Start the current period before changing players')
+    if not row('SELECT 1 FROM game_players WHERE game_id=? AND player_id=?', (gid, data.player_id)):
+        raise HTTPException(400, 'Player is not assigned to this game')
+
+    now = utc_now()
+    with conn() as c:
+        active = c.execute(
+            'SELECT id FROM minute_entries WHERE period_id=? AND player_id=? AND ended_at IS NULL ORDER BY id DESC LIMIT 1',
+            (period['id'], data.player_id)
+        ).fetchone()
+        if active:
+            c.execute('UPDATE minute_entries SET ended_at=? WHERE id=?', (now.isoformat(), active['id']))
+        else:
+            c.execute(
+                'INSERT INTO minute_entries(game_id,period_id,player_id,started_at) VALUES(?,?,?,?)',
+                (gid, period['id'], data.player_id, now.isoformat())
+            )
+
+    return minutes_payload(gid, period_type, period_number)
+
+
 # ---------------- Shots & Events ----------------
 
 @app.post('/api/shots')
@@ -801,6 +1015,7 @@ def player_stats(pid: int, season_id: Optional[int] = None):
 @app.get('/api/games/{gid}/report.pdf')
 def report(gid: int):
     g = game(gid)
+    minutes = player_minutes_totals([gid])
     buf = io.BytesIO()
     c = pdfcanvas.Canvas(buf, pagesize=letter)
     w, h = letter
@@ -820,8 +1035,8 @@ def report(gid: int):
 
     y = h - 180
     c.setFont('Helvetica-Bold', 9)
-    heads = ['Player', 'PTS', 'FG', '3PT', 'FT', 'AST', 'REB', 'STL', 'BLK', 'TO']
-    xs = [36, 175, 210, 255, 300, 345, 385, 430, 470, 510]
+    heads = ['Player', 'MIN', 'PTS', 'FG', '3PT', 'FT', 'AST', 'REB', 'STL', 'BLK', 'TO']
+    xs = [36, 150, 185, 220, 260, 300, 340, 375, 415, 455, 495]
     for x, t in zip(xs, heads):
         c.drawString(x, y, t)
     y -= 14
@@ -831,7 +1046,8 @@ def report(gid: int):
         st = p['stats']
         vals = [
             f"#{p.get('jersey_number') or ''} {p['first_name']} {p['last_name']}",
-            st['pts'], f"{st['fgm']}/{st['fga']}", f"{st['tpm']}/{st['tpa']}", f"{st['ftm']}/{st['fta']}",
+            format_report_minutes(minutes.get(p['id'], 0)), st['pts'],
+            f"{st['fgm']}/{st['fga']}", f"{st['tpm']}/{st['tpa']}", f"{st['ftm']}/{st['fta']}",
             st['ast'], st['oreb'] + st['dreb'], st['stl'], st['blk'], st['to']
         ]
         c.setFont('Helvetica', 8)
@@ -865,6 +1081,7 @@ def season_report(sid: int):
     losses = sum(1 for g in season_games if g['status'] == 'final' and g['team_score'] < g['opponent_score'])
 
     game_ids = [g['id'] for g in season_games]
+    minutes = player_minutes_totals(game_ids)
 
     buf = io.BytesIO()
     c = pdfcanvas.Canvas(buf, pagesize=letter)
@@ -939,8 +1156,8 @@ def season_report(sid: int):
     y -= 18
 
     c.setFont('Helvetica-Bold', 9)
-    heads = ['Player', 'GP', 'PTS', 'FG', '3PT', 'FT', 'AST', 'REB', 'STL', 'BLK', 'TO']
-    xs = [36, 165, 195, 225, 270, 310, 350, 385, 425, 460, 495]
+    heads = ['Player', 'GP', 'MIN', 'PTS', 'FG', '3PT', 'FT', 'AST', 'REB', 'STL', 'BLK', 'TO']
+    xs = [36, 145, 175, 215, 250, 290, 330, 370, 405, 445, 480, 515]
     for x, t in zip(xs, heads):
         c.drawString(x, y, t)
     y -= 14
@@ -957,9 +1174,10 @@ def season_report(sid: int):
             SELECT DISTINCT g.id FROM games g
             LEFT JOIN shots s ON s.game_id=g.id
             LEFT JOIN stat_events e ON e.game_id=g.id
-            WHERE g.id IN ({placeholders}) AND (s.player_id=? OR e.player_id=?)
+            LEFT JOIN minute_entries m ON m.game_id=g.id
+            WHERE g.id IN ({placeholders}) AND (s.player_id=? OR e.player_id=? OR m.player_id=?)
             ''',
-            [*game_ids, player['id'], player['id']]
+            [*game_ids, player['id'], player['id'], player['id']]
         )
 
         if not played:
@@ -985,7 +1203,8 @@ def season_report(sid: int):
 
         vals = [
             f"#{player.get('jersey_number') or ''} {player['first_name']} {player['last_name']}",
-            len(played), totals['pts'], f"{totals['fgm']}/{totals['fga']}",
+            len(played), format_report_minutes(minutes.get(player['id'], 0)), totals['pts'],
+            f"{totals['fgm']}/{totals['fga']}",
             f"{totals['tpm']}/{totals['tpa']}", f"{totals['ftm']}/{totals['fta']}",
             totals['ast'], totals['reb'], totals['stl'], totals['blk'], totals['to']
         ]
@@ -1074,7 +1293,10 @@ async def restore_database(request: Request):
         finally:
             restored_database.close()
 
-        required_tables = {'seasons', 'players', 'games', 'game_players', 'shots', 'stat_events'}
+        required_tables = {
+            'seasons', 'players', 'games', 'game_players', 'shots', 'stat_events',
+            'game_periods', 'minute_entries'
+        }
         if integrity != 'ok' or not required_tables <= tables:
             return JSONResponse(
                 status_code=400,
