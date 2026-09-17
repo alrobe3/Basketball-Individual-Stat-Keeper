@@ -13,6 +13,7 @@ author = "Basketball Stat Tracker - Adam Roberts"
 author_email = "support@example.com"
 
 [tool.briefcase.app.basketballstattracker]
+syle_primary_color= "#2468ef"
 formal_name = "Basketball Stat Tracker"
 description = "Track basketball games, players, shots, and statistics."
 icon = "static/icon"

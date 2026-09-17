@@ -1337,11 +1337,14 @@ async function saveGame() {
         closeModal('gameModal');
 
         $('gameSelect').value = g.id;
-        loadGame(g.id);
+        //loadGame(g.id);
+        openManagedGame(g.id);
     }
     catch (e) {
         toast(e.message);
     }
+
+    
 }
 
 /* ---------------- Live game ---------------- */

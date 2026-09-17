@@ -1416,12 +1416,13 @@ def main():
             from android.graphics.drawable import ColorDrawable
 
             self._impl.native.getWindow().setNavigationBarColor(
-                Color.parseColor('#161616')
+                #Color.parseColor('#161616')
+                Color.parseColor('#2468ef')
             )
             action_bar = self._impl.native.getActionBar()
             if action_bar:
                 action_bar.setBackgroundDrawable(
-                    ColorDrawable(Color.parseColor('#161616'))
+                    ColorDrawable(Color.parseColor('#2468ef'))
                 )
             self.main_window.content = toga.WebView(
                 url=f'http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}/?native_shell=android'
@@ -1457,7 +1458,15 @@ def main():
                         id=f'screen-{screen_id}'
                     )
                 )
+            cmd_home = Command(
+                        lambda widget, screen_id='home': self.open_screen(screen_id, widget),
+                        text="Home",
+                        icon="static/home.png"
+                    
+            )
 
+            self.main_window.toolbar.add(cmd_home)
+                    
             
             self.commands.add(
                 Command(
@@ -1485,11 +1494,20 @@ def main():
             "switchToScreen('players')"
             )
 
+        
+
         def open_screen(self, screen_name, widget=None):
             if self.main_window and self.main_window.content:
                 self.main_window.content.evaluate_javascript(
                     f"switchToScreen({screen_name!r})"
                 )
+        def open_home(self, widget=None):
+            if self.main_window and self.main_window.content:
+                            self.main_window.content.evaluate_javascript(
+                                f"switchToScreen('home')"
+                            )
+            print("Opening home screen")
+            self.main_window.content.evaluate_javascript(f'toast("Opening home screen")')
 
         def handle_navigation(self, widget, url):
             parsed_url = urllib.parse.urlparse(url)
