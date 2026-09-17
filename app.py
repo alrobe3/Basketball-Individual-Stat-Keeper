@@ -1418,7 +1418,7 @@ def main():
             self._impl.native.getWindow().setNavigationBarColor(
                 Color.parseColor('#2468ef')
             )
-            action_bar = self._impl.native.toolbar()
+            action_bar = self._impl.native.getActionBar()
             if action_bar:
                 action_bar.setBackgroundDrawable(
                     ColorDrawable(Color.parseColor('#2468ef'))
