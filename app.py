@@ -1424,6 +1424,11 @@ def main():
                 action_bar.setBackgroundDrawable(
                     ColorDrawable(Color.parseColor('#2468ef'))
                 )
+                from android.text import Html
+                action_bar.setTitle(
+                    Html.fromHtml(
+                        f"<font color='#FFFFFF'>{self.formal_name}</font>"))
+
             self.main_window.content = toga.WebView(
                 url=f'http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}/?native_shell=android'
             )
