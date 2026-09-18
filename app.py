@@ -1388,7 +1388,6 @@ def open_profile_photo_picker():
 def main():
     import toga
     import uvicorn
-    from toga.command import Command, Group
 
     class BasketballStatTracker(toga.App):
         def startup(self):
@@ -1412,112 +1411,51 @@ def main():
                 time.sleep(0.01)
 
             self.main_window = toga.MainWindow(self.formal_name)
-            from android.graphics import Color
-            from android.graphics.drawable import ColorDrawable
+            if sys.platform == 'android':
+                # Toga's MainWindow deliberately leaves the native support
+                # action bar visible (teal, from the app theme); the framework
+                # getActionBar() returns null under AppCompat, so it must be
+                # hidden through Toga's own hook. The web UI already renders
+                # its own top bar, hamburger menu and bottom navigation, so
+                # the native bar is redundant.
+                try:
+                    self.main_window._impl.show_actionbar(False)
+                except Exception:
+                    try:
+                        support_bar = self._impl.native.getSupportActionBar()
+                        if support_bar is not None:
+                            support_bar.hide()
+                    except Exception:
+                        pass
 
-            self._impl.native.getWindow().setNavigationBarColor(
-                Color.parseColor('#2468ef')
-            )
-            action_bar = self._impl.native.getActionBar()
-            if action_bar:
-                action_bar.setBackgroundDrawable(
-                    ColorDrawable(Color.parseColor('#2468ef'))
-                )
-                from android.text import Html
-                action_bar.setTitle(
-                    Html.fromHtml(
-                        f"<font color='#FFFFFF'>{self.formal_name}</font>"))
-
+                # Match the system bars to the app's light theme.
+                from android.graphics import Color
+                from android.view import View
+                window = self._impl.native.getWindow()
+                window.setStatusBarColor(Color.parseColor('#2468ef'))
+                window.setNavigationBarColor(Color.parseColor('#ffffff'))
+                try:
+                    window.getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+                    )
+                except Exception:
+                    pass
             self.main_window.content = toga.WebView(
                 url=f'http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}/?native_shell=android'
             )
             self.main_window.content.on_navigation_starting = self.handle_navigation
 
-            screen_commands = [
-                ('Home', 'home', 10),
-                ('Profile', 'profile', 20),
-                ('Live', 'live', 30),
-                ('Players', 'players', 40),
-                ('Seasons', 'seasons', 50),
-                ('Opponents/Locations', 'reference', 60),
-                ('Games', 'gameManagement', 70),
-                ('Stats', 'stats', 80),
-                ('Reports', 'reports', 90),
-            ]
-            data_group = Group(
-                'Settings & Data',
-                parent=Group.COMMANDS,
-                order=10,
-                id='data-settings'
-            )
-
-            for label, screen_id, order in screen_commands:
-                self.commands.add(
-                    Command(
-                        lambda widget, screen_id=screen_id: self.open_screen(screen_id, widget),
-                        label,
-                        icon=toga.Icon('static/home') if screen_id == 'home' else None,
-                        group=Group.COMMANDS,
-                        order=order,
-                        id=f'screen-{screen_id}'
-                    )
-                )
-            cmd_home = Command(
-                        lambda widget, screen_id='home': self.open_screen(screen_id, widget),
-                        text="Home",
-                        icon="static/home.png"
-                    
-            )
-
-            self.main_window.toolbar.add(cmd_home)
-                    
-            
-            self.commands.add(
-                Command(
-                    self.open_settings,
-                    'Settings',
-                    group=data_group,
-                    order=10,
-                    id='settings'
-                )
-            )
-            self.commands.add(
-                Command(
-                    self.open_project_link,
-                    'Project on GitHub',
-                    group=data_group,
-                    order=20,
-                    id='project-github'
-                )
-            )
-
             self.main_window.show()
-
-        def open_players(self, widget):
-            self.main_window.content.evaluate_javascript(
-            "switchToScreen('players')"
-            )
-
-        
-
-        def open_screen(self, screen_name, widget=None):
-            if self.main_window and self.main_window.content:
-                self.main_window.content.evaluate_javascript(
-                    f"switchToScreen({screen_name!r})"
-                )
-        def open_home(self, widget=None):
-            if self.main_window and self.main_window.content:
-                            self.main_window.content.evaluate_javascript(
-                                f"switchToScreen('home')"
-                            )
-            print("Opening home screen")
-            self.main_window.content.evaluate_javascript(f'toast("Opening home screen")')
 
         def handle_navigation(self, widget, url):
             parsed_url = urllib.parse.urlparse(url)
 
             if parsed_url.path == '/api/profile-photo/pick':
                 self.pick_profile_photo()
+                return False
+
+            if parsed_url.path == '/api/open-github':
+                webbrowser.open('https://github.com/alrobe3/Basketball-Individual-Stat-Keeper')
                 return False
 
             if parsed_url.path != '/api/share-image/open':
@@ -1619,14 +1557,6 @@ def main():
             except Exception as error:
                 message = json.dumps(f'Could not load the selected photo: {error}')
                 self.main_window.content.evaluate_javascript(f'toast({message})')
-
-        def open_settings(self, widget):
-            self.main_window.content.evaluate_javascript(
-                "document.getElementById('settingsModal').classList.add('open')"
-            )
-
-        def open_project_link(self, widget):
-            webbrowser.open('https://github.com/alrobe3/Basketball-Individual-Stat-Keeper')
 
         def on_exit(self):
             if getattr(self, 'server', None):
