@@ -173,7 +173,7 @@ async function restoreDatabase(file) {
 }
 
 function closeModal(id) {
-    $(id).classList.remove('open');
+    $(id).classList.remove('open', 'stacked');
     if (id === 'shotDeleteModal' || id === 'shotResultModal') {
         const card = $(id).querySelector('.modal-card');
         card.classList.remove('shot-delete-card', 'arrow-top', 'arrow-bottom');
@@ -217,6 +217,9 @@ function switchToScreen(screenName) {
         screen.classList.add('active');
     }
 
+    if (screenName === 'home') {
+        renderHome();
+    }
     if (screenName === 'stats') {
         loadPlayerStats();
     }
@@ -514,6 +517,7 @@ function openPlayerModal(id, fromNewGame = false) {
     $('playerActive').value = p?.is_active ? '1' : '0';
     $('deletePlayerBtn').style.display = p ? 'inline-block' : 'none';
 
+    raiseAboveGameModal('playerModal');
     $('playerModal').classList.add('open');
 }
 
@@ -703,6 +707,15 @@ function renderReferenceScreen() {
     }
 }
 
+// Sub-modals (opponent/location/player) can be opened on top of the new-game
+// or edit-game modal. Those sit later in the DOM with the same z-index, so
+// raise the sub-modal above them instead of rendering behind.
+function raiseAboveGameModal(id) {
+    if ($('gameModal').classList.contains('open') || $('editGameModal').classList.contains('open')) {
+        $(id).classList.add('stacked');
+    }
+}
+
 function openOpponentModal(id) {
     const o = S.opponents.find(x => x.id === id);
 
@@ -711,6 +724,7 @@ function openOpponentModal(id) {
     $('opponentName').value = o?.name || '';
     $('deleteOpponentBtn').style.display = o ? 'inline-block' : 'none';
 
+    raiseAboveGameModal('opponentModal');
     $('opponentModal').classList.add('open');
 }
 
@@ -773,6 +787,7 @@ function openLocationModal(id) {
     $('locationName').value = l?.name || '';
     $('deleteLocationBtn').style.display = l ? 'inline-block' : 'none';
 
+    raiseAboveGameModal('locationModal');
     $('locationModal').classList.add('open');
 }
 
@@ -1144,8 +1159,7 @@ function renderGameManagement() {
 }
 
 async function openManagedGame(gameId) {
-    document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.screen === 'live'));
-    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'live'));
+    switchToScreen('live');
 
     $('gameSelect').value = gameId;
     await loadGame(gameId);
@@ -1301,6 +1315,7 @@ async function reloadGames() {
     populateReportSeasonFilter();
     renderReports();
     renderGameManagement();
+    renderHome();
 }
 
 /* ---------------- New Game ---------------- */
@@ -1373,7 +1388,8 @@ async function saveGame() {
         closeModal('gameModal');
 
         $('gameSelect').value = g.id;
-        loadGame(g.id);
+        await loadGame(g.id);
+        switchToScreen('live');
     }
     catch (e) {
         toast(e.message);
