@@ -9,6 +9,14 @@ button,input,select{font:inherit}
 .brand-button{border:0;background:transparent;padding:0;cursor:pointer;color:inherit;text-align:left}
 .topbar-actions{display:flex;align-items:center;gap:8px}
 .status{font-size:12px;padding:6px 10px;border-radius:99px;background:#fff}
+.menu-button{border:0;background:#eef2f7;border-radius:10px;width:34px;height:34px;font-size:17px;line-height:1;cursor:pointer;color:#111827;display:inline-flex;align-items:center;justify-content:center}
+.menu-button:hover{background:#e2e8f0}
+.app-menu{position:fixed;top:calc(56px + env(safe-area-inset-top));right:10px;z-index:70;min-width:240px;max-height:calc(100vh - 80px);overflow:auto;background:#fff;border:1px solid #e6eaf0;border-radius:14px;box-shadow:0 12px 32px #0003;padding:6px;display:none}
+.app-menu.open{display:block}
+.app-menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:600;color:#111827;cursor:pointer;text-align:left}
+.app-menu button:hover{background:#f1f4f8}
+.app-menu button span{width:24px;text-align:center;font-size:16px}
+.app-menu-sep{height:1px;background:#edf0f5;margin:6px 4px}
 .card{background:var(--card);border-radius:24px;padding:18px;box-shadow:0 5px 10px #0005;margin-bottom:16px}
 .liveBody-shot-chart-card{padding-left:0;padding-right:0}
 .liveBody-shot-chart-card>.shot-chart-heading,.liveBody-shot-chart-card>.small{padding-left:18px;padding-right:18px}

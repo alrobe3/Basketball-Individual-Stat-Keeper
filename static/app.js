@@ -228,6 +228,42 @@ function switchToScreen(screenName) {
     }
 }
 
+// Hamburger menu in the top bar (replaces the native Android overflow menu).
+function toggleAppMenu(e) {
+    if (e) e.stopPropagation();
+    $('appMenu').classList.toggle('open');
+}
+
+function menuGo(target) {
+    $('appMenu').classList.remove('open');
+    if (target === 'settings') {
+        openModal('settingsModal');
+        return;
+    }
+    if (target === 'github') {
+        openGitHubProject();
+        return;
+    }
+    switchToScreen(target);
+}
+
+function openGitHubProject() {
+    var url = 'https://github.com/alrobe3/Basketball-Individual-Stat-Keeper';
+    if (NATIVE_APP) {
+        // Intercepted by the Android app, which opens it in the external browser.
+        window.location.href = '/api/open-github';
+    } else {
+        window.open(url, '_blank', 'noopener');
+    }
+}
+
+document.addEventListener('click', function (e) {
+    var menu = $('appMenu');
+    if (menu && menu.classList.contains('open') && !menu.contains(e.target)) {
+        menu.classList.remove('open');
+    }
+});
+
 function minutesUrl(gameId = S.game?.id) {
     return `/api/games/${gameId}/minutes?period_type=${S.minutes.periodType}&period_number=${S.minutes.periodNumber}`;
 }
@@ -1337,14 +1373,11 @@ async function saveGame() {
         closeModal('gameModal');
 
         $('gameSelect').value = g.id;
-        //loadGame(g.id);
-        openManagedGame(g.id);
+        loadGame(g.id);
     }
     catch (e) {
         toast(e.message);
     }
-
-    
 }
 
 /* ---------------- Live game ---------------- */

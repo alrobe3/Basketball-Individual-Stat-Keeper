@@ -122,8 +122,24 @@
     <button class="brand brand-button" onclick="switchToScreen('home')">🏀 Basketball Stat Tracker</button>
     <div class="topbar-actions">
         <span id="syncStatus" class="status">Ready</span>
+        <button class="menu-button" onclick="toggleAppMenu(event)" aria-label="Open menu" aria-haspopup="true">☰</button>
     </div>
 </header>
+
+<div id="appMenu" class="app-menu" role="menu" aria-label="App menu">
+    <button role="menuitem" onclick="menuGo('home')"><span>🏠</span>Home</button>
+    <button role="menuitem" onclick="menuGo('live')"><span>🎥</span>Live Game</button>
+    <button role="menuitem" onclick="menuGo('players')"><span>📖</span>Players</button>
+    <button role="menuitem" onclick="menuGo('seasons')"><span>🗓️</span>Seasons</button>
+    <button role="menuitem" onclick="menuGo('reference')"><span>🤝</span>Opponents &amp; Locations</button>
+    <button role="menuitem" onclick="menuGo('gameManagement')"><span>📋</span>Games</button>
+    <button role="menuitem" onclick="menuGo('stats')"><span>📊</span>Stats</button>
+    <button role="menuitem" onclick="menuGo('reports')"><span>📄</span>Reports</button>
+    <button role="menuitem" onclick="menuGo('profile')"><span>👤</span>Profile</button>
+    <div class="app-menu-sep"></div>
+    <button role="menuitem" onclick="menuGo('settings')"><span>⚙️</span>Settings</button>
+    <button role="menuitem" onclick="menuGo('github')"><span>⭐</span>Project on GitHub</button>
+</div>
 
 <!-- HOME -->
 <section id="home" class="screen active">
