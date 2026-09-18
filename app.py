@@ -1412,22 +1412,28 @@ def main():
                 time.sleep(0.01)
 
             self.main_window = toga.MainWindow(self.formal_name)
-            from android.graphics import Color
-            from android.graphics.drawable import ColorDrawable
+            if sys.platform == 'android':
+                from android.graphics import Color
+                from android.view import View
 
-            self._impl.native.getWindow().setNavigationBarColor(
-                Color.parseColor('#2468ef')
-            )
-            action_bar = self._impl.native.getActionBar()
-            if action_bar:
-                action_bar.setBackgroundDrawable(
-                    ColorDrawable(Color.parseColor('#2468ef'))
-                )
-                from android.text import Html
-                action_bar.setTitle(
-                    Html.fromHtml(
-                        f"<font color='#FFFFFF'>{self.formal_name}</font>"))
+                # The web UI renders its own top bar and bottom navigation, so
+                # the native Android action bar is redundant -- hiding it
+                # removes the black bar that used to sit above the app content.
+                action_bar = self._impl.native.getActionBar()
+                if action_bar:
+                    action_bar.hide()
 
+                # Match the system bars to the app's light theme instead of
+                # the old near-black (#161616).
+                window = self._impl.native.getWindow()
+                window.setStatusBarColor(Color.parseColor('#2468ef'))
+                window.setNavigationBarColor(Color.parseColor('#ffffff'))
+                try:
+                    window.getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+                    )
+                except Exception:
+                    pass
             self.main_window.content = toga.WebView(
                 url=f'http://127.0.0.1:{self.server.servers[0].sockets[0].getsockname()[1]}/?native_shell=android'
             )
@@ -1462,15 +1468,7 @@ def main():
                         id=f'screen-{screen_id}'
                     )
                 )
-            cmd_home = Command(
-                        lambda widget, screen_id='home': self.open_screen(screen_id, widget),
-                        text="Home",
-                        icon="static/home.png"
-                    
-            )
 
-            self.main_window.toolbar.add(cmd_home)
-                    
             
             self.commands.add(
                 Command(
@@ -1498,20 +1496,11 @@ def main():
             "switchToScreen('players')"
             )
 
-        
-
         def open_screen(self, screen_name, widget=None):
             if self.main_window and self.main_window.content:
                 self.main_window.content.evaluate_javascript(
                     f"switchToScreen({screen_name!r})"
                 )
-        def open_home(self, widget=None):
-            if self.main_window and self.main_window.content:
-                            self.main_window.content.evaluate_javascript(
-                                f"switchToScreen('home')"
-                            )
-            print("Opening home screen")
-            self.main_window.content.evaluate_javascript(f'toast("Opening home screen")')
 
         def handle_navigation(self, widget, url):
             parsed_url = urllib.parse.urlparse(url)

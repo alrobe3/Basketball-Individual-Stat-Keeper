@@ -121,7 +121,7 @@ th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;font-size:14px}
 .minutes-status.on-court{background:#d9f3df;color:#126b2e}
 .floating-game-toolbar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:25;display:flex;align-items:center;gap:4px;width:min(520px,calc(100% - 24px));padding:6px;background:#cfcfcf;border:1px solid #3a3a3a;border-radius:22px;box-shadow:0 8px 24px #0008}
 .floating-game-action{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:16px;padding:8px 6px;background:transparent;color:#111111;font-size:12px;font-weight:700;cursor:pointer}
-.floating-game-action:hover{background:#2a2a2a}
+.floating-game-action:hover{background:#d9d9d9}
 .floating-game-action.finish{background:#1e293b;color:#fff}
 .floating-game-action.finish:hover{background:#d13a30}
 .floating-game-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;font-size:16px;line-height:1}
